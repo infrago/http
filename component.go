@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 type (
@@ -111,7 +112,7 @@ type (
 // 这里就直接按methods拆分路由，因为要继承
 // *不在这里处理，因为注册的时候，可能配置文件还没有加载
 // sitesConifg 有可能还没有准备好。
-func (this *Module) Router(name string, config Router, override bool) {
+func (this *Module) Router(name string, config Router) {
 
 	// 默认都要加站点
 	if strings.Contains(name, ".") == false {
@@ -263,7 +264,7 @@ func (this *Module) Router(name string, config Router, override bool) {
 	// 写入routers
 	for key, router := range routers {
 		key = strings.ToLower(key) //key全部小写
-		if override {
+		if infra.Override() {
 			this.routers[key] = router
 		} else {
 			if _, ok := this.routers[key]; ok == false {
@@ -291,8 +292,8 @@ func (module *Module) Routers(sites ...string) map[string]Router {
 }
 
 // Filter 注册 拦截器
-func (this *Module) Filter(name string, config Filter, override bool) {
-	if override {
+func (this *Module) Filter(name string, config Filter) {
+	if infra.Override() {
 		this.filters[name] = config
 	} else {
 		if _, ok := this.filters[name]; ok == false {
@@ -302,8 +303,8 @@ func (this *Module) Filter(name string, config Filter, override bool) {
 }
 
 // Handler 注册 处理器
-func (this *Module) Handler(name string, config Handler, override bool) {
-	if override {
+func (this *Module) Handler(name string, config Handler) {
+	if infra.Override() {
 		this.handlers[name] = config
 	} else {
 		if _, ok := this.handlers[name]; ok == false {
@@ -312,7 +313,7 @@ func (this *Module) Handler(name string, config Handler, override bool) {
 	}
 }
 
-func (this *Module) Helper(name string, config Helper, override bool) {
+func (this *Module) Helper(name string, config Helper) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
@@ -325,7 +326,7 @@ func (this *Module) Helper(name string, config Helper, override bool) {
 	}
 
 	for _, key := range alias {
-		if override {
+		if infra.Override() {
 			this.helpers[key] = config
 		} else {
 			if _, ok := this.helpers[key]; ok == false {

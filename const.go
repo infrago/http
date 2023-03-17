@@ -2,6 +2,8 @@ package http
 
 import (
 	"errors"
+
+	"github.com/infrago/infra"
 )
 
 const (

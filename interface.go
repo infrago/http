@@ -8,25 +8,26 @@ import (
 	"time"
 
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 	"github.com/infrago/util"
 )
 
-func (this *Module) Register(name string, value Any, override bool) {
+func (this *Module) Register(name string, value Any) {
 	switch config := value.(type) {
 	case Driver:
-		this.Driver(name, config, override)
+		this.Driver(name, config)
 	case Config:
-		this.Config(name, config, override)
+		this.Config(name, config)
 	case Site:
-		this.Site(name, config, override)
+		this.Site(name, config)
 	case Sites:
-		this.Sites(name, config, override)
+		this.Sites(name, config)
 	case Router:
-		this.Router(name, config, override)
+		this.Router(name, config)
 	case Filter:
-		this.Filter(name, config, override)
+		this.Filter(name, config)
 	case Handler:
-		this.Handler(name, config, override)
+		this.Handler(name, config)
 	}
 }
 

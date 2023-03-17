@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 func (this *Instance) newContext() *Context {

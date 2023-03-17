@@ -5,6 +5,7 @@ import (
 	"time"
 
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 func init() {
@@ -220,7 +221,7 @@ type (
 )
 
 // Driver 注册驱动
-func (module *Module) Driver(name string, driver Driver, override bool) {
+func (module *Module) Driver(name string, driver Driver) {
 	module.mutex.Lock()
 	defer module.mutex.Unlock()
 
@@ -228,7 +229,7 @@ func (module *Module) Driver(name string, driver Driver, override bool) {
 		panic("Invalid http driver: " + name)
 	}
 
-	if override {
+	if infra.Override() {
 		module.drivers[name] = driver
 	} else {
 		if module.drivers[name] == nil {
@@ -237,14 +238,14 @@ func (module *Module) Driver(name string, driver Driver, override bool) {
 	}
 }
 
-func (this *Module) Config(name string, config Config, override bool) {
+func (this *Module) Config(name string, config Config) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
 	this.config = config
 }
 
-func (this *Module) Site(name string, site Site, override bool) {
+func (this *Module) Site(name string, site Site) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
@@ -252,7 +253,7 @@ func (this *Module) Site(name string, site Site, override bool) {
 		name = infra.DEFAULT
 	}
 
-	if override {
+	if infra.Override() {
 		this.sites[name] = site
 	} else {
 		if _, ok := this.sites[name]; ok == false {
@@ -260,8 +261,8 @@ func (this *Module) Site(name string, site Site, override bool) {
 		}
 	}
 }
-func (this *Module) Sites(name string, site Sites, override bool) {
+func (this *Module) Sites(name string, site Sites) {
 	for key, val := range site {
-		this.Site(key, val, override)
+		this.Site(key, val)
 	}
 }
