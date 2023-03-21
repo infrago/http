@@ -12,22 +12,22 @@ import (
 	"github.com/infrago/util"
 )
 
-func (this *Module) Register(name string, value Any) {
-	switch config := value.(type) {
+func (this *Module) Register(o infra.Object) {
+	switch config := o.Object.(type) {
 	case Driver:
-		this.Driver(name, config)
+		this.Driver(o.Name, config)
 	case Config:
-		this.Config(name, config)
+		this.Config(o.Name, config)
 	case Site:
-		this.Site(name, config)
+		this.Site(o.Name, config)
 	case Sites:
-		this.Sites(name, config)
+		this.Sites(o.Name, config)
 	case Route:
-		this.Route(name, config)
+		this.Route(o.Name, config)
 	case Filter:
-		this.Filter(name, config)
+		this.Filter(o.Name, config)
 	case Handler:
-		this.Handler(name, config)
+		this.Handler(o.Name, config)
 	}
 }
 
