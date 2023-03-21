@@ -691,7 +691,7 @@ func (this *Module) Launch() {
 		if err != nil {
 			panic("Failed to start http: " + err.Error())
 		}
-		log.Println(fmt.Sprintf("infra.Go HTTP is running at %d", this.config.Port))
+		log.Println(fmt.Sprintf("%s HTTP is listening on: %d", infra.INFRAGO, this.config.Port))
 	}
 
 	this.launched = true
