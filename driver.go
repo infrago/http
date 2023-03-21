@@ -49,8 +49,8 @@ type (
 		Method string
 		// Uri 请求的Uri
 		Uri string
-		// Router 路由器名
-		Router string
+		// Route 路由名
+		Route string
 		// Site 对应的站点
 		Site string
 		// Hosts 绑定的域名

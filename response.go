@@ -555,7 +555,7 @@ func (this *Instance) viewHelpers(ctx *Context) Map {
 		"string": func(key string, args ...Any) string {
 			return ctx.String(key, args...)
 		},
-		//待处理，暂时不要，自己到router里处理去
+		//待处理，暂时不要，自己到route里处理去
 		// "option": func(name, field string, v Any) Any {
 		// 	value := fmt.Sprintf("%v", v)
 		// 	//多语言支持

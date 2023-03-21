@@ -37,8 +37,8 @@ func (this *httpUrl) Route(name string, values ...Map) string {
 
 	//从整理后的infos拿到真实的路由名
 	// name += ".0"
-	// if info, ok := module.routerInfos[name]; ok == false {
-	// 	return "[no router here]"
+	// if info, ok := module.routeInfos[name]; ok == false {
+	// 	return "[no route here]"
 	// }
 
 	//当前站点
@@ -105,13 +105,13 @@ func (this *httpUrl) Route(name string, values ...Map) string {
 	var info Info
 
 	//搜索定义
-	if vv, ok := module.routerInfos[name]; ok {
+	if vv, ok := module.routeInfos[name]; ok {
 		info = vv
-	} else if vv, ok := module.routerInfos[nameget]; ok {
+	} else if vv, ok := module.routeInfos[nameget]; ok {
 		info = vv
-	} else if vv, ok := module.routerInfos[namepost]; ok {
+	} else if vv, ok := module.routeInfos[namepost]; ok {
 		info = vv
-	} else if vv, ok := module.routerInfos[nameall]; ok {
+	} else if vv, ok := module.routeInfos[nameall]; ok {
 		info = vv //全方法版加了.*
 	} else {
 		//没有找到路由定义

@@ -22,8 +22,8 @@ func (this *Module) Register(name string, value Any) {
 		this.Site(name, config)
 	case Sites:
 		this.Sites(name, config)
-	case Router:
-		this.Router(name, config)
+	case Route:
+		this.Route(name, config)
 	case Filter:
 		this.Filter(name, config)
 	case Handler:
@@ -314,20 +314,20 @@ func (this *Module) Configure(global Map) {
 		this.sitesConfigure(vvs)
 	}
 }
-func (this *Module) routerInitialize(orgKey, siteName, siteKey string, router Router) {
+func (this *Module) routeInitialize(orgKey, siteName, siteKey string, route Route) {
 	hosts := make([]string, 0)
 	if site, ok := this.sites[siteName]; ok {
 		hosts = append(hosts, site.Hosts...)
 	}
 
-	for i, uri := range router.Uris {
+	for i, uri := range route.Uris {
 		// infoKey := fmt.Sprintf("%s.%s.%d", siteName, siteKey, i)
 		infoKey := fmt.Sprintf("%s.%d", siteKey, i)
 		if siteName == "" {
 			infoKey = fmt.Sprintf("%s.%d", siteKey, i)
 		}
-		this.routerInfos[infoKey] = Info{
-			router.Method, uri, orgKey, siteName, hosts, router.Socket, router.Args,
+		this.routeInfos[infoKey] = Info{
+			route.Method, uri, orgKey, siteName, hosts, route.Socket, route.Args,
 		}
 	}
 }
@@ -520,17 +520,17 @@ func (this *Module) Initialize() {
 		}
 	}
 
-	// 处理 RouterInfos
+	// 处理 RouteInfos
 
-	// 整理router, filter, handler
+	// 整理route, filter, handler
 	// 加上站点前缀，主要是处理 *
-	this.routerInfos = make(map[string]Info, 0)
-	for key, router := range this.routers {
+	this.routeInfos = make(map[string]Info, 0)
+	for key, route := range this.routes {
 		if strings.HasPrefix(key, "*.") {
 			for _, site := range sites {
 				siteKey := strings.Replace(key, "*.", site+".", 1)
-				if _, ok := this.routers[siteKey]; ok == false {
-					this.routerInitialize(key, site, siteKey, router)
+				if _, ok := this.routes[siteKey]; ok == false {
+					this.routeInitialize(key, site, siteKey, route)
 				}
 			}
 		} else {
@@ -538,10 +538,10 @@ func (this *Module) Initialize() {
 			names := strings.Split(key, ".")
 			if len(names) > 0 {
 				siteKey := key
-				this.routerInitialize(key, names[0], siteKey, router)
+				this.routeInitialize(key, names[0], siteKey, route)
 			} else {
 				siteKey := "." + key
-				this.routerInitialize(key, "", siteKey, router)
+				this.routeInitialize(key, "", siteKey, route)
 			}
 		}
 	}
@@ -632,7 +632,7 @@ func (this *Module) Connect() {
 	connect.Accept(&inst)
 
 	//注册HTTP
-	for name, info := range this.routerInfos {
+	for name, info := range this.routeInfos {
 		if info.Site != "" && len(info.Hosts) > 0 {
 			// 站点的hosts必须大于0，因为有可能定义了路由
 			// 但是没有配置站点，这时候就匹配不到域名
@@ -645,7 +645,7 @@ func (this *Module) Connect() {
 	// 分开注册，把空站点的路由后注册
 	// 要不然，当有相同的uri匹配的时候，如果空站先被注册（由于map的key是顺序的）
 	// 就会先匹配路由，导致正常站点uri无法被匹配到
-	for name, info := range this.routerInfos {
+	for name, info := range this.routeInfos {
 		if info.Site == "" {
 			if err := connect.Register(name, info); err != nil {
 				panic("Failed to register http: " + err.Error())
@@ -667,7 +667,7 @@ func (this *Module) Connect() {
 			panic("Failed to register http: " + err.Error())
 		}
 
-		this.routerInfos[name] = info
+		this.routeInfos[name] = info
 	}
 
 	//保存实例
