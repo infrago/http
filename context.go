@@ -32,7 +32,7 @@ type (
 		// 以下几个字段必须独立
 		// 要不然，Invoke的时候，会被修改掉
 		Name    string
-		Config  Route
+		Config  Router
 		Setting Map
 
 		Site string

@@ -37,8 +37,8 @@ func (this *httpUrl) Route(name string, values ...Map) string {
 
 	//从整理后的infos拿到真实的路由名
 	// name += ".0"
-	// if info, ok := module.routeInfos[name]; ok == false {
-	// 	return "[no route here]"
+	// if info, ok := module.routerInfos[name]; ok == false {
+	// 	return "[no router here]"
 	// }
 
 	//当前站点
@@ -105,13 +105,13 @@ func (this *httpUrl) Route(name string, values ...Map) string {
 	var info Info
 
 	//搜索定义
-	if vv, ok := module.routeInfos[name]; ok {
+	if vv, ok := module.routerInfos[name]; ok {
 		info = vv
-	} else if vv, ok := module.routeInfos[nameget]; ok {
+	} else if vv, ok := module.routerInfos[nameget]; ok {
 		info = vv
-	} else if vv, ok := module.routeInfos[namepost]; ok {
+	} else if vv, ok := module.routerInfos[namepost]; ok {
 		info = vv
-	} else if vv, ok := module.routeInfos[nameall]; ok {
+	} else if vv, ok := module.routerInfos[nameall]; ok {
 		info = vv //全方法版加了.*
 	} else {
 		//没有找到路由定义
@@ -169,7 +169,7 @@ func (this *httpUrl) Route(name string, values ...Map) string {
 
 	//1. 处理传过来的值
 	//从value中获取
-	//如果route不定义args，这里是拿不到值的
+	//如果router不定义args，这里是拿不到值的
 	dataArgsValues, dataParseValues := Map{}, Map{}
 	for k, v := range params {
 		if k[0:1] == "{" {
@@ -205,7 +205,7 @@ func (this *httpUrl) Route(name string, values ...Map) string {
 		}
 	}
 
-	//所以这里还得处理一次，如果route不定义args，parse就拿不到值，就直接用values中的值
+	//所以这里还得处理一次，如果router不定义args，parse就拿不到值，就直接用values中的值
 	for k, v := range params {
 		if k[0:1] == "{" && dataValues[k] == nil {
 			dataValues[k] = v

@@ -36,10 +36,10 @@ func (this *Instance) Serve(name string, params Map, res http.ResponseWriter, re
 	ctx.writer = res
 
 	//名称和别名
-	if info, ok := this.module.routeInfos[name]; ok {
-		ctx.Name = info.Route
+	if info, ok := this.module.routerInfos[name]; ok {
+		ctx.Name = info.Router
 		ctx.Site = info.Site
-		if cfg, ok := this.module.routes[ctx.Name]; ok {
+		if cfg, ok := this.module.routers[ctx.Name]; ok {
 			ctx.Config = cfg
 			ctx.Setting = cfg.Setting
 		}

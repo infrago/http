@@ -510,12 +510,10 @@ func (this *Instance) viewHelpers(ctx *Context) Map {
 	zone := ctx.Timezone()
 
 	helpers := Map{
-		"route": ctx.Url.Route,
-		// "browse":   ctx.Url.Browse,
-		// "preview":  ctx.Url.Preview,
-		// "download": ctx.Url.Download,
-		"backurl": ctx.Url.Back,
-		"lasturl": ctx.Url.Last,
+		"route":    ctx.Url.Route,
+		"routeurl": ctx.Url.Route,
+		"backurl":  ctx.Url.Back,
+		"lasturl":  ctx.Url.Last,
 		"siteurl": func(name string, paths ...string) string {
 			path := ""
 			if len(paths) > 0 {

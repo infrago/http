@@ -25,7 +25,7 @@ var (
 
 		drivers: make(map[string]Driver, 0),
 
-		routes:   make(map[string]Route, 0),
+		routers:  make(map[string]Router, 0),
 		filters:  make(map[string]Filter, 0),
 		handlers: make(map[string]Handler, 0),
 		helpers:  make(map[string]Helper, 0),
@@ -46,12 +46,12 @@ type (
 
 		drivers map[string]Driver
 
-		routes   map[string]Route
+		routers  map[string]Router
 		filters  map[string]Filter
 		handlers map[string]Handler
 		helpers  map[string]Helper
 
-		routeInfos map[string]Info
+		routerInfos map[string]Info
 
 		serveFilters    map[string][]ctxFunc
 		requestFilters  map[string][]ctxFunc

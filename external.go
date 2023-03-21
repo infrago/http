@@ -4,8 +4,8 @@ import (
 	. "github.com/infrago/base"
 )
 
-func Routes(sites ...string) map[string]Route {
-	return module.Routes(sites...)
+func Routers(sites ...string) map[string]Router {
+	return module.Routers(sites...)
 }
 
 func SiteHosts(site string) []string {

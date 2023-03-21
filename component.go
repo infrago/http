@@ -12,8 +12,8 @@ import (
 type (
 	Cookie = http.Cookie
 
-	Routing map[string]Route
-	Route   struct {
+	Routing map[string]Router
+	Router  struct {
 		site   string
 		Method string
 
@@ -108,11 +108,11 @@ type (
 	}
 )
 
-// Route 注册路由
+// Router 注册路由
 // 这里就直接按methods拆分路由，因为要继承
 // *不在这里处理，因为注册的时候，可能配置文件还没有加载
 // sitesConifg 有可能还没有准备好。
-func (this *Module) Route(name string, config Route) {
+func (this *Module) Router(name string, config Router) {
 
 	// 默认都要加站点
 	if strings.Contains(name, ".") == false {
@@ -127,7 +127,7 @@ func (this *Module) Route(name string, config Route) {
 		}
 	}
 
-	routes := make(map[string]Route, 0)
+	routers := make(map[string]Router, 0)
 
 	// 处理多method的路由，单独保存，并且要复制
 	if config.Routing != nil {
@@ -250,7 +250,7 @@ func (this *Module) Route(name string, config Route) {
 				realConfig.Denied = methodConfig.Denied
 			}
 
-			routes[realName] = realConfig
+			routers[realName] = realConfig
 		}
 		//清掉这个 Routing 没用了
 		config.Routing = nil
@@ -258,37 +258,37 @@ func (this *Module) Route(name string, config Route) {
 	if config.Action != nil {
 		//全方法版，自动加*号，这样和get,post保持一样的尾节数
 		name += ".*"
-		routes[name] = config
+		routers[name] = config
 	}
 
-	// 写入routes
-	for key, route := range routes {
+	// 写入routers
+	for key, router := range routers {
 		key = strings.ToLower(key) //key全部小写
 		if infra.Override() {
-			this.routes[key] = route
+			this.routers[key] = router
 		} else {
-			if _, ok := this.routes[key]; ok == false {
-				this.routes[key] = route
+			if _, ok := this.routers[key]; ok == false {
+				this.routers[key] = router
 			}
 		}
 	}
 
 }
 
-func (module *Module) Routes(sites ...string) map[string]Route {
+func (module *Module) Routers(sites ...string) map[string]Router {
 	prefix := ""
 	if len(sites) > 0 {
 		prefix = sites[0] + "."
 	}
 
-	routes := make(map[string]Route)
-	for name, config := range module.routes {
+	routers := make(map[string]Router)
+	for name, config := range module.routers {
 		if prefix == "" || strings.HasPrefix(name, prefix) {
-			routes[name] = config
+			routers[name] = config
 		}
 	}
 
-	return routes
+	return routers
 }
 
 // Filter 注册 拦截器
