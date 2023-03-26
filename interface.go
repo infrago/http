@@ -691,7 +691,7 @@ func (this *Module) Launch() {
 		if err != nil {
 			panic("Failed to start http: " + err.Error())
 		}
-		log.Println(fmt.Sprintf("%s HTTP is listening on: %d", infra.INFRAGO, this.config.Port))
+		log.Println(fmt.Sprintf("%s HTTP is running on %d with %d sites, %d routers.", infra.INFRAGO, this.config.Port, len(this.sites), len(this.routers)))
 	}
 
 	this.launched = true
