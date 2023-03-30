@@ -70,9 +70,10 @@ func (this *Instance) Serve(name string, params Map, res http.ResponseWriter, re
 	ip := net.ParseIP(ctx.Host)
 	if ip == nil {
 		parts := strings.Split(ctx.Host, ".")
-		if len(parts) >= 2 {
-			l := len(parts)
-			ctx.Domain = parts[l-2] + "." + parts[l-1]
+		lll := len(parts)
+		if lll >= 2 {
+			ctx.Domain = parts[lll-2] + "." + parts[lll-1]
+			ctx.Subdomain = strings.Join(parts[1:], ".")
 		}
 	}
 

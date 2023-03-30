@@ -285,10 +285,24 @@ func (this *httpUrl) Site(name string, path string, options ...Map) string {
 	//待优化，多hosts时候的分发
 
 	//如果有上下文，如果是当前站点，就使用当前域
-	if this.ctx != nil && this.ctx.Site == name {
-		uuu = this.ctx.Host
-		if vv, ok := module.sites[name]; ok {
-			ssl = vv.Ssl
+	if this.ctx != nil {
+		if this.ctx.Site == name {
+			//当前站点，直读
+			uuu = this.ctx.Host
+			if vv, ok := module.sites[name]; ok {
+				ssl = vv.Ssl
+			}
+		} else {
+			//跨站点
+			if vv, ok := module.sites[name]; ok {
+				ssl = vv.Ssl
+				if len(vv.Hosts) > 0 {
+					uuu = vv.Hosts[0]
+				}
+			}
+
+			uuu = strings.TrimSuffix(uuu, module.config.Domain)
+			uuu += this.ctx.Subdomain
 		}
 	} else if vv, ok := module.sites[name]; ok {
 		ssl = vv.Ssl
@@ -299,6 +313,20 @@ func (this *httpUrl) Site(name string, path string, options ...Map) string {
 		uuu = "127.0.0.1"
 		//uuu = fmt.Sprintf("127.0.0.1:%v", Config.Http.Port)
 	}
+	// if this.ctx != nil && this.ctx.Site == name {
+	// 	uuu = this.ctx.Host
+	// 	if vv, ok := module.sites[name]; ok {
+	// 		ssl = vv.Ssl
+	// 	}
+	// } else if vv, ok := module.sites[name]; ok {
+	// 	ssl = vv.Ssl
+	// 	if len(vv.Hosts) > 0 {
+	// 		uuu = vv.Hosts[0]
+	// 	}
+	// } else {
+	// 	uuu = "127.0.0.1"
+	// 	//uuu = fmt.Sprintf("127.0.0.1:%v", Config.Http.Port)
+	// }
 
 	// 开发模式
 	if infra.Developing() && module.config.Port != 80 {

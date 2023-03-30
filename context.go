@@ -42,11 +42,12 @@ type (
 		headers map[string]string
 		cookies map[string]http.Cookie
 
-		Method string
-		Host   string
-		Domain string
-		Path   string
-		Uri    string
+		Method    string
+		Host      string
+		Domain    string
+		Subdomain string
+		Path      string
+		Uri       string
 
 		Ajax bool
 
