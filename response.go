@@ -574,7 +574,7 @@ func (this *Instance) viewHelpers(ctx *Context) Map {
 
 	// 这里要带上 http 携带的 helpers
 
-	for k, v := range this.module.helperActions {
+	for k, v := range module.helperActions {
 		if f, ok := v.(func(*Context, ...Any) Any); ok {
 			helpers[k] = func(args ...Any) Any {
 				return f(ctx, args...)

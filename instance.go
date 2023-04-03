@@ -36,14 +36,14 @@ func (this *Instance) Serve(name string, params Map, res http.ResponseWriter, re
 	ctx.writer = res
 
 	//名称和别名
-	if info, ok := this.module.routerInfos[name]; ok {
+	if info, ok := module.routerInfos[name]; ok {
 		ctx.Name = info.Router
 		ctx.Site = info.Site
-		if cfg, ok := this.module.routers[ctx.Name]; ok {
+		if cfg, ok := module.routers[ctx.Name]; ok {
 			ctx.Config = cfg
 			ctx.Setting = cfg.Setting
 		}
-		if cfg, ok := this.module.sites[ctx.Site]; ok {
+		if cfg, ok := module.sites[ctx.Site]; ok {
 			ctx.site = cfg
 			ctx.charset = ctx.site.Charset
 		}
@@ -91,7 +91,7 @@ func (this *Instance) open(ctx *Context) {
 	ctx.next(this.preprocessing)
 
 	//serve拦截器
-	ctx.next(this.module.serveFilters[ctx.Site]...)
+	ctx.next(module.serveFilters[ctx.Site]...)
 	ctx.next(this.serve)
 
 	//开始执行
@@ -105,7 +105,7 @@ func (this *Instance) serve(ctx *Context) {
 	ctx.next(this.finding) //静态文件在这处理
 
 	//request拦截器
-	ctx.next(this.module.requestFilters[ctx.Site]...)
+	ctx.next(module.requestFilters[ctx.Site]...)
 	ctx.next(this.request)
 
 	//开始执行
@@ -139,7 +139,7 @@ func (this *Instance) execute(ctx *Context) {
 	ctx.clear()
 
 	//execute拦截器
-	ctx.next(this.module.executeFilters[ctx.Site]...)
+	ctx.next(module.executeFilters[ctx.Site]...)
 	if ctx.Config.Actions != nil || len(ctx.Config.Actions) > 0 {
 		ctx.next(ctx.Config.Actions...)
 	}
@@ -156,7 +156,7 @@ func (this *Instance) response(ctx *Context) {
 	ctx.clear() //清理
 
 	//response拦截器
-	ctx.next(this.module.responseFilters[ctx.Site]...)
+	ctx.next(module.responseFilters[ctx.Site]...)
 
 	//开始执行
 	ctx.Next()
@@ -176,7 +176,7 @@ func (this *Instance) found(ctx *Context) {
 	if ctx.Config.Found != nil {
 		ctx.next(ctx.Config.Found)
 	}
-	ctx.next(this.module.foundHandlers[ctx.Site]...)
+	ctx.next(module.foundHandlers[ctx.Site]...)
 	ctx.next(this.foundDefault)
 
 	ctx.Next()
@@ -201,7 +201,7 @@ func (this *Instance) error(ctx *Context) {
 	if ctx.Config.Error != nil {
 		ctx.next(ctx.Config.Error)
 	}
-	ctx.next(this.module.errorHandlers[ctx.Site]...)
+	ctx.next(module.errorHandlers[ctx.Site]...)
 	ctx.next(this.errorDefault)
 
 	ctx.Next()
@@ -225,7 +225,7 @@ func (this *Instance) failed(ctx *Context) {
 	if ctx.Config.Failed != nil {
 		ctx.next(ctx.Config.Failed)
 	}
-	ctx.next(this.module.failedHandlers[ctx.Site]...)
+	ctx.next(module.failedHandlers[ctx.Site]...)
 	ctx.next(this.failedDefault)
 
 	ctx.Next()
@@ -249,7 +249,7 @@ func (this *Instance) denied(ctx *Context) {
 	if ctx.Config.Denied != nil {
 		ctx.next(ctx.Config.Denied)
 	}
-	ctx.next(this.module.deniedHandlers[ctx.Site]...)
+	ctx.next(module.deniedHandlers[ctx.Site]...)
 	ctx.next(this.deniedDefault)
 
 	ctx.Next()

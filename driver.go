@@ -9,7 +9,7 @@ import (
 type (
 	// Driver 数据驱动
 	Driver interface {
-		Connect(config Config) (Connect, error)
+		Connect(*Instance) (Connect, error)
 	}
 
 	// Connect 连接

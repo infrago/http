@@ -39,8 +39,8 @@ var (
 type (
 	Module struct {
 		mutex    sync.Mutex
-		instance Instance
 		url      *httpUrl
+		instance *Instance
 
 		connected, initialized, launched bool
 
@@ -214,9 +214,9 @@ type (
 	}
 
 	Instance struct {
-		module  *Module
-		config  Config
 		connect Connect
+		Config  Config
+		Setting Map
 	}
 )
 

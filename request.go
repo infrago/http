@@ -108,12 +108,12 @@ func (this *Instance) finding(ctx *Context) {
 		//静态文件放在这里处理
 		isDir := false
 		file := ""
-		sitePath := path.Join(this.module.config.Static, ctx.Site, ctx.Path)
+		sitePath := path.Join(module.config.Static, ctx.Site, ctx.Path)
 		if fi, err := os.Stat(sitePath); err == nil {
 			isDir = fi.IsDir()
 			file = sitePath
 		} else {
-			sharedPath := path.Join(this.module.config.Static, this.module.config.Shared, ctx.Path)
+			sharedPath := path.Join(module.config.Static, module.config.Shared, ctx.Path)
 			if fi, err := os.Stat(sharedPath); err == nil {
 				isDir = fi.IsDir()
 				file = sharedPath
@@ -124,10 +124,10 @@ func (this *Instance) finding(ctx *Context) {
 		if isDir {
 			tempFile := file
 			file = ""
-			if len(this.module.config.Defaults) == 0 {
+			if len(module.config.Defaults) == 0 {
 				file = ""
 			} else {
-				for _, doc := range this.module.config.Defaults {
+				for _, doc := range module.config.Defaults {
 					docPath := path.Join(tempFile, doc)
 					if fi, err := os.Stat(docPath); err == nil && fi.IsDir() == false {
 						file = docPath
@@ -150,7 +150,7 @@ func (this *Instance) finding(ctx *Context) {
 
 // 跨域处理
 func (this *Instance) crossing(ctx *Context) {
-	cross := this.module.cross
+	cross := module.cross
 
 	//允许跨域才处理s
 	if cross.Allow {

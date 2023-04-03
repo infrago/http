@@ -195,7 +195,7 @@ func (ctx *Context) Cookie(key string, vals ...Any) string {
 
 func (ctx *Context) uploadFile(patterns ...string) (*os.File, error) {
 
-	if dir := ctx.inst.module.config.Upload; dir != "" {
+	if dir := module.config.Upload; dir != "" {
 		pattern := ""
 		if len(patterns) > 0 {
 			pattern = patterns[0]

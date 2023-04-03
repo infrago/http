@@ -611,8 +611,13 @@ func (this *Module) Connect() {
 		panic("Invalid http driver: " + this.config.Driver)
 	}
 
+	//待处理，config不用复制
+	inst := &Instance{
+		nil, this.config, this.config.Setting,
+	}
+
 	// 建立连接
-	connect, err := driver.Connect(this.config)
+	connect, err := driver.Connect(inst)
 	if err != nil {
 		panic("Failed to connect to http: " + err.Error())
 	}
@@ -623,13 +628,11 @@ func (this *Module) Connect() {
 		panic("Failed to open http connect: " + err.Error())
 	}
 
-	//待处理，config不用复制
-	inst := Instance{
-		this, this.config, connect,
-	}
+	//保存连接
+	inst.connect = connect
 
 	// 指定委托
-	connect.Accept(&inst)
+	connect.Accept(inst)
 
 	//注册HTTP
 	for name, info := range this.routerInfos {
