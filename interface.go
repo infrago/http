@@ -631,9 +631,6 @@ func (this *Module) Connect() {
 	//保存连接
 	inst.connect = connect
 
-	// 指定委托
-	connect.Accept(inst)
-
 	//注册HTTP
 	for name, info := range this.routerInfos {
 		if info.Site != "" && len(info.Hosts) > 0 {

@@ -22,8 +22,6 @@ type (
 		//Close 关闭连接
 		Close() error
 
-		// Accept 委托
-		Accept(Delegate) error
 		// Register 注册路由
 		Register(name string, info Info) error
 
