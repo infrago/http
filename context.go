@@ -112,8 +112,8 @@ func (ctx *Context) Denied(res Res) {
 // Sign 不会生成新的ID
 func (ctx *Context) Sign(auth bool, payload Map, expires time.Duration, roles ...string) string {
 	//加入HTTP的默认过期时间
-	if ctx.site.Expiry > 0 && expires < 0 {
-		expires = ctx.site.Expiry
+	if ctx.site.Expire > 0 && expires < 0 {
+		expires = ctx.site.Expire
 	}
 	token := ctx.Meta.Sign(auth, payload, expires, roles...)
 	// 如果 cookie 配置不为空，则将token写入cookie
@@ -124,8 +124,8 @@ func (ctx *Context) Sign(auth bool, payload Map, expires time.Duration, roles ..
 // NewSign 会生成新的ID
 func (ctx *Context) NewSign(auth bool, payload Map, expires time.Duration, roles ...string) string {
 	//加入HTTP的默认过期时间
-	if ctx.site.Expiry > 0 && expires < 0 {
-		expires = ctx.site.Expiry
+	if ctx.site.Expire > 0 && expires < 0 {
+		expires = ctx.site.Expire
 	}
 	token := ctx.Meta.NewSign(auth, payload, expires, roles...)
 	// 如果 cookie 配置不为空，则将token写入cookie

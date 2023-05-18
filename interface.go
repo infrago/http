@@ -75,14 +75,14 @@ func (this *Module) httpConfigure(config Map) {
 		this.config.Token = true
 	}
 
-	//Expiry
-	expiry := util.ParseDurationConfig(config, "expiry")
-	if expiry != util.NoDuration {
-		this.config.Expiry = expiry
+	//Expire
+	expire := util.ParseDurationConfig(config, "expire")
+	if expire != util.NoDuration {
+		this.config.Expire = expire
 	}
 	expires := util.ParseDurationConfig(config, "expires")
 	if expires != util.NoDuration {
-		this.config.Expiry = expires
+		this.config.Expire = expires
 	}
 
 	// cookie
@@ -233,10 +233,10 @@ func (this *Module) siteConfigure(name string, config Map) {
 		site.Token = this.config.Token
 	}
 
-	//Expiry
-	expiry := util.ParseDurationConfig(config, "expiry")
-	if expiry != util.NoDuration {
-		site.Expiry = expiry
+	//Expire
+	expire := util.ParseDurationConfig(config, "expire")
+	if expire != util.NoDuration {
+		site.Expire = expire
 	}
 	// cookie
 	if vv, ok := config["cookie"].(string); ok {
@@ -430,10 +430,10 @@ func (this *Module) Initialize() {
 	}
 
 	// 过期时间，和，MaxAge 默认30天，小于0，才表示随浏览器
-	if this.config.Expiry == 0 {
-		this.config.Expiry = time.Hour * 24 * 30
-	} else if this.config.Expiry < 0 {
-		this.config.Expiry = 0
+	if this.config.Expire == 0 {
+		this.config.Expire = time.Hour * 24 * 30
+	} else if this.config.Expire < 0 {
+		this.config.Expire = 0
 	}
 	if this.config.MaxAge == 0 {
 		this.config.MaxAge = time.Hour * 24 * 30
@@ -463,8 +463,8 @@ func (this *Module) Initialize() {
 			site.Cookie = this.config.Cookie
 		}
 
-		if site.Expiry == 0 {
-			site.Expiry = this.config.Expiry
+		if site.Expire == 0 {
+			site.Expire = this.config.Expire
 		}
 		if site.MaxAge <= 0 {
 			site.MaxAge = this.config.MaxAge
@@ -514,7 +514,7 @@ func (this *Module) Initialize() {
 	if _, ok := this.sites[""]; ok == false {
 		this.sites[""] = Site{
 			Name: "空站点", Charset: this.config.Charset,
-			Token: this.config.Token, Expiry: this.config.Expiry,
+			Token: this.config.Token, Expire: this.config.Expire,
 			Cookie: this.config.Cookie, Crypto: this.config.Crypto,
 			MaxAge: this.config.MaxAge, HttpOnly: this.config.HttpOnly,
 		}

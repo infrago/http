@@ -50,8 +50,8 @@ func (this *Instance) preprocessing(ctx *Context) {
 
 	//是否自动生成token
 	if needSign && ctx.site.Token {
-		if ctx.site.Expiry > 0 {
-			ctx.Sign(false, nil, ctx.site.Expiry, ctx.Config.Kind)
+		if ctx.site.Expire > 0 {
+			ctx.Sign(false, nil, ctx.site.Expire, ctx.Config.Kind)
 		} else {
 			ctx.Sign(false, nil, -1, ctx.Config.Kind)
 		}

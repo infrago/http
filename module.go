@@ -101,9 +101,9 @@ type (
 		// Token 是否自动生成TOKEN
 		// 当cookie不为空，且token=true的时候，会自动生成空token
 		Token bool
-		// Expiry 下发token的有效期，
+		// Expire 下发token的有效期，
 		// 默认使用token本身的有效期设置
-		Expiry time.Duration
+		Expire time.Duration
 
 		// Crypto 表示cookie是否加密
 		Crypto bool
@@ -174,9 +174,9 @@ type (
 
 		// Token 是否自动生成
 		Token bool
-		// Expiry 下发token的有效期，
+		// Expire 下发token的有效期，
 		// 默认使用token本身的有效期设置
-		Expiry time.Duration
+		Expire time.Duration
 
 		// Crypto 表示cookie是否加密
 		Crypto bool
