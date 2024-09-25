@@ -51,9 +51,9 @@ func (this *Instance) preprocessing(ctx *Context) {
 	//是否自动生成token
 	if needSign && ctx.site.Token {
 		if ctx.site.Expire > 0 {
-			ctx.Sign(false, nil, ctx.site.Expire, ctx.Config.Kind)
+			ctx.Sign(false, nil, ctx.site.Expire, ctx.Config.Role)
 		} else {
-			ctx.Sign(false, nil, -1, ctx.Config.Kind)
+			ctx.Sign(false, nil, -1, ctx.Config.Role)
 		}
 	}
 
@@ -353,7 +353,7 @@ func (this *Instance) validating(ctx *Context) {
 func (this *Instance) authorizing(ctx *Context) {
 
 	if ctx.Config.Sign {
-		if false == ctx.Signed(ctx.Config.Kind) {
+		if false == ctx.Signed(ctx.Config.Role) {
 			ctx.Result(infra.Unsigned)
 			this.denied(ctx)
 			return
@@ -361,7 +361,7 @@ func (this *Instance) authorizing(ctx *Context) {
 	}
 
 	if ctx.Config.Auth {
-		if false == ctx.Authed(ctx.Config.Kind) {
+		if false == ctx.Authed(ctx.Config.Role) {
 			ctx.Result(infra.Unauthed)
 			this.denied(ctx)
 			return

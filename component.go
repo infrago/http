@@ -35,9 +35,9 @@ type (
 		Actions []ctxFunc `json:"-"`
 		Action  ctxFunc   `json:"-"`
 
+		Role string `json:"role"`
 		Sign bool   `json:"Sign"`
 		Auth bool   `json:"auth"`
-		Kind string `json:"kind"`
 
 		// 路由单独可定义的处理器
 		Found  ctxFunc `json:"-"`
