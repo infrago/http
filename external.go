@@ -23,3 +23,10 @@ func RouteUrl(name string, args ...Map) string {
 func SiteUrl(name string, path string, options ...Map) string {
 	return module.url.Site(name, path, options...)
 }
+
+func DomainConfig() string {
+	return module.config.Domain
+}
+func PortConfig() int {
+	return module.config.Port
+}
