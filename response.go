@@ -440,7 +440,7 @@ func (this *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 	res.WriteHeader(ctx.Code)
 	_, err := io.Copy(res, body.buffer)
 	//bytes,err := ioutil.ReadAll(body.buffer)
-	if err == nil {
+	if err != nil {
 		http.Error(res, "read buffer error", StatusInternalServerError)
 	}
 	body.buffer.Close()
