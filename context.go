@@ -402,13 +402,13 @@ func (ctx *Context) File(file string, args ...string) {
 	ctx.Body = httpFileBody{file, name}
 }
 
-func (ctx *Context) Buffer(buffer io.ReadCloser, args ...string) {
+func (ctx *Context) Buffer(buffer io.ReadCloser, size int64, args ...string) {
 	ctx.clearBody()
 	name := ctx.fileTyping(args...)
-	ctx.Body = httpBufferBody{buffer, name}
+	ctx.Body = httpBufferBody{buffer, size, name}
 }
-func (ctx *Context) Stream(stream io.ReadCloser, args ...string) {
-	ctx.Buffer(stream, args...)
+func (ctx *Context) Stream(stream io.ReadCloser, size int64, args ...string) {
+	ctx.Buffer(stream, size, args...)
 }
 func (ctx *Context) Binary(bytes []byte, args ...string) {
 	ctx.clearBody()

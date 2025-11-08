@@ -56,6 +56,7 @@ type (
 	}
 	httpBufferBody struct {
 		buffer io.ReadCloser
+		size   int64
 		name   string
 	}
 	httpProxyBody struct {
@@ -431,18 +432,24 @@ func (this *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 
 	mimeType := infra.Mimetype(ctx.Type, "application/octet-stream")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
-
+	if body.size > 0 {
+		res.Header().Set("Content-Length", fmt.Sprintf("%d", body.size))
+	}
 	//加入自定义文件名
 	if body.name != "" {
 		res.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v;", url.QueryEscape(body.name)))
 	}
 
+	// res.Header().Set("Accept-Ranges", "bytes") // 支持拖进度条
+	// res.Header().Set("Cache-Control", "no-cache")
+
 	res.WriteHeader(ctx.Code)
-	size, err := io.Copy(res, body.buffer)
-	res.Header().Set("Content-Length", fmt.Sprintf("%d", size))
+	_, err := io.Copy(res, body.buffer)
 	//bytes,err := ioutil.ReadAll(body.buffer)
 	if err != nil {
-		http.Error(res, "read buffer error", StatusInternalServerError)
+		// fmt.Println("err", err)
+		//这里不能再写了，因为已经返回了
+		// http.Error(res, "read buffer error", StatusInternalServerError)
 	}
 	body.buffer.Close()
 
