@@ -438,7 +438,8 @@ func (this *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 	}
 
 	res.WriteHeader(ctx.Code)
-	_, err := io.Copy(res, body.buffer)
+	size, err := io.Copy(res, body.buffer)
+	res.Header().Set("Content-Length", fmt.Sprintf("%d", size))
 	//bytes,err := ioutil.ReadAll(body.buffer)
 	if err != nil {
 		http.Error(res, "read buffer error", StatusInternalServerError)
