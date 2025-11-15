@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -425,6 +426,7 @@ func (this *Instance) bodyBinary(ctx *Context, body httpBinaryBody) {
 }
 func (this *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 	res := ctx.writer
+	req := ctx.reader
 
 	if ctx.Type == "" {
 		ctx.Type = "file"
@@ -432,16 +434,55 @@ func (this *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 
 	mimeType := infra.Mimetype(ctx.Type, "application/octet-stream")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
-	if body.size > 0 {
-		res.Header().Set("Content-Length", fmt.Sprintf("%d", body.size))
-	}
+
 	//加入自定义文件名
 	if body.name != "" {
 		res.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v;", url.QueryEscape(body.name)))
 	}
 
-	// res.Header().Set("Accept-Ranges", "bytes") // 支持拖进度条
-	// res.Header().Set("Cache-Control", "no-cache")
+	if body.size > 0 {
+		res.Header().Set("Content-Length", fmt.Sprintf("%d", body.size))
+	}
+
+	rangeHeader := req.Header.Get("Range")
+	var start, end int64 = 0, body.size - 1
+	// 解析 Range 头
+	if rangeHeader != "" && strings.HasPrefix(rangeHeader, "bytes=") {
+		ctx.Code = http.StatusPartialContent // Partial Content
+
+		// 去掉 "bytes="
+		rangeSpec := strings.TrimPrefix(rangeHeader, "bytes=")
+
+		parts := strings.Split(rangeSpec, "-")
+
+		// "start-end"
+		if parts[0] != "" {
+			s, _ := strconv.ParseInt(parts[0], 10, 64)
+			start = s
+		}
+		if len(parts) > 1 && parts[1] != "" {
+			e, _ := strconv.ParseInt(parts[1], 10, 64)
+			end = e
+		}
+
+		// 保证范围合法
+		if start < 0 {
+			start = 0
+		}
+		if end >= body.size {
+			end = body.size - 1
+		}
+	}
+
+	contentLength := end - start + 1
+
+	fmt.Println("stream", start, end, body.size)
+
+	res.Header().Set("Content-Length", fmt.Sprintf("%d", contentLength))
+	if ctx.Code == http.StatusPartialContent {
+		res.Header().Set("Accept-Ranges", "bytes")
+		res.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, body.size))
+	}
 
 	res.WriteHeader(ctx.Code)
 	_, err := io.Copy(res, body.buffer)
@@ -452,7 +493,6 @@ func (this *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 		// http.Error(res, "read buffer error", StatusInternalServerError)
 	}
 	body.buffer.Close()
-
 }
 
 func (this *Instance) bodyProxy(ctx *Context, body httpProxyBody) {
