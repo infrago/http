@@ -476,8 +476,6 @@ func (this *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 
 	contentLength := end - start + 1
 
-	fmt.Println("stream", start, end, body.size)
-
 	res.Header().Set("Content-Length", fmt.Sprintf("%d", contentLength))
 	if ctx.Code == http.StatusPartialContent {
 		res.Header().Set("Accept-Ranges", "bytes")
