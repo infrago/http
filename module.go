@@ -19,6 +19,9 @@ var module = &Module{
 	drivers:       make(map[string]Driver, 0),
 	configs:       make(map[string]Config, 0),
 	instances:     make(map[string]*Instance, 0),
+	routers:       make(map[string]Router, 0),
+	filters:       make(map[string]Filter, 0),
+	handlers:      make(map[string]Handler, 0),
 }
 
 type (
@@ -34,12 +37,17 @@ type (
 		drivers   map[string]Driver
 		configs   map[string]Config
 		instances map[string]*Instance
+
+		routers  map[string]Router
+		filters  map[string]Filter
+		handlers map[string]Handler
 	}
 
 	Config struct {
 		Driver string
 		Port   int
 		Host   string
+		Domain string
 
 		CertFile string
 		KeyFile  string
@@ -216,6 +224,9 @@ func (m *Module) configure(name string, conf Map) {
 	if v, ok := conf["host"].(string); ok {
 		cfg.Host = v
 	}
+	if v, ok := conf["domain"].(string); ok {
+		cfg.Domain = v
+	}
 	if v, ok := conf["cert"].(string); ok {
 		cfg.CertFile = v
 	}
@@ -299,34 +310,104 @@ func (m *Module) Setup() {
 		return
 	}
 
+	names := map[string]struct{}{}
+
 	// ensure instances for configs
 	if len(m.configs) == 0 {
 		m.configs[bamgoo.DEFAULT] = m.defaultConfig
 	}
 	for name, cfg := range m.configs {
+		names[name] = struct{}{}
 		inst := m.ensureInstance(name)
 		inst.Config = mergeConfig(inst.Config, cfg)
 		inst.Setting = inst.Config.Setting
 		inst.Cross = m.cross
-		m.applyDefaults(inst)
-		m.buildInstance(inst)
 	}
 
-	// instances created via registration but without explicit config
-	for name, inst := range m.instances {
-		if _, ok := m.configs[name]; !ok {
-			inst.Config = mergeConfig(inst.Config, m.defaultConfig)
-			inst.Setting = inst.Config.Setting
-			inst.Cross = m.cross
-			m.applyDefaults(inst)
-			m.buildInstance(inst)
+	for key := range m.routers {
+		instName, _ := splitPrefix(key)
+		if instName != "*" {
+			names[instName] = struct{}{}
 		}
+	}
+	for key := range m.filters {
+		instName, _ := splitPrefix(key)
+		if instName != "*" {
+			names[instName] = struct{}{}
+		}
+	}
+	for key := range m.handlers {
+		instName, _ := splitPrefix(key)
+		if instName != "*" {
+			names[instName] = struct{}{}
+		}
+	}
+
+	if len(names) == 0 {
+		names[bamgoo.DEFAULT] = struct{}{}
+	}
+
+	for name := range names {
+		inst := m.ensureInstance(name)
+		if cfg, ok := m.configs[name]; ok {
+			inst.Config = mergeConfig(inst.Config, cfg)
+		} else {
+			inst.Config = mergeConfig(inst.Config, m.defaultConfig)
+		}
+		inst.Setting = inst.Config.Setting
+		inst.Cross = m.cross
+
+		inst.routers = make(map[string]Router, 0)
+		inst.filters = make(map[string]Filter, 0)
+		inst.handlers = make(map[string]Handler, 0)
+	}
+
+	for key, router := range m.routers {
+		instName, routerName := splitPrefix(key)
+		if instName == "*" {
+			for _, inst := range m.instances {
+				applyRouter(inst, routerName, router)
+			}
+			continue
+		}
+		inst := m.ensureInstance(instName)
+		applyRouter(inst, routerName, router)
+	}
+	for key, filter := range m.filters {
+		instName, filterName := splitPrefix(key)
+		if instName == "*" {
+			for _, inst := range m.instances {
+				storeFilter(inst.filters, filterName, filter)
+			}
+			continue
+		}
+		inst := m.ensureInstance(instName)
+		storeFilter(inst.filters, filterName, filter)
+	}
+	for key, handler := range m.handlers {
+		instName, handlerName := splitPrefix(key)
+		if instName == "*" {
+			for _, inst := range m.instances {
+				storeHandler(inst.handlers, handlerName, handler)
+			}
+			continue
+		}
+		inst := m.ensureInstance(instName)
+		storeHandler(inst.handlers, handlerName, handler)
+	}
+
+	for _, inst := range m.instances {
+		m.applyDefaults(inst)
+		m.buildInstance(inst)
 	}
 }
 
 func (m *Module) applyDefaults(inst *Instance) {
 	if inst.Config.Port <= 0 || inst.Config.Port > 65535 {
 		inst.Config.Port = 0
+	}
+	if inst.Config.Host == "" {
+		inst.Config.Host = "0.0.0.0"
 	}
 	if inst.Config.Charset == "" {
 		inst.Config.Charset = UTF8
@@ -514,6 +595,9 @@ func mergeConfig(baseCfg, newCfg Config) Config {
 	}
 	if newCfg.Host != "" {
 		out.Host = newCfg.Host
+	}
+	if newCfg.Domain != "" {
+		out.Domain = newCfg.Domain
 	}
 	if newCfg.CertFile != "" {
 		out.CertFile = newCfg.CertFile

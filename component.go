@@ -79,9 +79,53 @@ func (m *Module) RegisterRouter(name string, config Router) {
 		return
 	}
 
-	instName, routerName := splitPrefix(name)
-	inst := m.ensureInstance(instName)
+	name = strings.ToLower(name)
+	if bamgoo.Override() {
+		m.routers[name] = config
+	} else {
+		if _, ok := m.routers[name]; !ok {
+			m.routers[name] = config
+		}
+	}
+}
 
+// RegisterFilter registers an HTTP filter.
+func (m *Module) RegisterFilter(name string, config Filter) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if m.opened {
+		return
+	}
+	name = strings.ToLower(name)
+	if bamgoo.Override() {
+		m.filters[name] = config
+	} else {
+		if _, ok := m.filters[name]; !ok {
+			m.filters[name] = config
+		}
+	}
+}
+
+// RegisterHandler registers an HTTP handler.
+func (m *Module) RegisterHandler(name string, config Handler) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if m.opened {
+		return
+	}
+	name = strings.ToLower(name)
+	if bamgoo.Override() {
+		m.handlers[name] = config
+	} else {
+		if _, ok := m.handlers[name]; !ok {
+			m.handlers[name] = config
+		}
+	}
+}
+
+func expandRouter(routerName string, config Router) map[string]Router {
 	if config.Uris == nil || len(config.Uris) == 0 {
 		config.Uris = []string{config.Uri}
 	} else if config.Uri != "" {
@@ -186,57 +230,45 @@ func (m *Module) RegisterRouter(name string, config Router) {
 		routers[routerName] = config
 	}
 
-	// Save routers
+	return routers
+}
+
+func storeRouters(target map[string]Router, routers map[string]Router) {
 	for key, router := range routers {
 		key = strings.ToLower(key)
 		if bamgoo.Override() {
-			inst.routers[key] = router
+			target[key] = router
 		} else {
-			if _, ok := inst.routers[key]; !ok {
-				inst.routers[key] = router
+			if _, ok := target[key]; !ok {
+				target[key] = router
 			}
 		}
 	}
 }
 
-// RegisterFilter registers an HTTP filter.
-func (m *Module) RegisterFilter(name string, config Filter) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	if m.opened {
-		return
-	}
-	instName, filterName := splitPrefix(name)
-	inst := m.ensureInstance(instName)
-	filterName = strings.ToLower(filterName)
-
+func storeFilter(target map[string]Filter, name string, config Filter) {
+	name = strings.ToLower(name)
 	if bamgoo.Override() {
-		inst.filters[filterName] = config
+		target[name] = config
 	} else {
-		if _, ok := inst.filters[filterName]; !ok {
-			inst.filters[filterName] = config
+		if _, ok := target[name]; !ok {
+			target[name] = config
 		}
 	}
 }
 
-// RegisterHandler registers an HTTP handler.
-func (m *Module) RegisterHandler(name string, config Handler) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	if m.opened {
-		return
-	}
-	instName, handlerName := splitPrefix(name)
-	inst := m.ensureInstance(instName)
-	handlerName = strings.ToLower(handlerName)
-
+func storeHandler(target map[string]Handler, name string, config Handler) {
+	name = strings.ToLower(name)
 	if bamgoo.Override() {
-		inst.handlers[handlerName] = config
+		target[name] = config
 	} else {
-		if _, ok := inst.handlers[handlerName]; !ok {
-			inst.handlers[handlerName] = config
+		if _, ok := target[name]; !ok {
+			target[name] = config
 		}
 	}
+}
+
+func applyRouter(inst *Instance, routerName string, config Router) {
+	routers := expandRouter(routerName, config)
+	storeRouters(inst.routers, routers)
 }
