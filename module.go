@@ -111,7 +111,7 @@ func (m *Module) Register(name string, value Any) {
 	case Driver:
 		m.RegisterDriver(name, v)
 	case Config:
-		m.RegisterConfig(bamgoo.DEFAULT, v)
+		m.RegisterConfig(name, v)
 	case Configs:
 		m.RegisterConfigs(v)
 	case Router:
