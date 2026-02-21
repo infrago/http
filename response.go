@@ -6,10 +6,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/bamgoo/bamgoo"
 	. "github.com/bamgoo/base"
+	"github.com/bamgoo/view"
 )
 
 type (
@@ -46,6 +48,10 @@ type (
 		buffer io.ReadCloser
 		size   int64
 		name   string
+	}
+	httpViewBody struct {
+		view  string
+		model Map
 	}
 	httpStatusBody string
 )
@@ -93,6 +99,8 @@ func (inst *Instance) body(ctx *Context) {
 		inst.bodyBinary(ctx, body)
 	case httpBufferBody:
 		inst.bodyBuffer(ctx, body)
+	case httpViewBody:
+		inst.bodyView(ctx, body)
 	case httpStatusBody:
 		inst.bodyStatus(ctx, body)
 	default:
@@ -267,4 +275,69 @@ func (inst *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 	res.WriteHeader(ctx.Code)
 	io.Copy(res, body.buffer)
 	body.buffer.Close()
+}
+
+func (inst *Instance) bodyView(ctx *Context, body httpViewBody) {
+	res := ctx.writer
+
+	viewData := Map{
+		"config":  ctx.inst.Config,
+		"setting": ctx.inst.Setting,
+		"args":    ctx.Args,
+		"value":   ctx.Value,
+		"locals":  ctx.Locals,
+		"data":    ctx.Data,
+		"model":   body.model,
+	}
+
+	html, err := view.Parse(view.Body{
+		View:     body.view,
+		Site:     inst.Name,
+		Helpers:  inst.viewHelpers(ctx),
+		Language: ctx.Language(),
+		Timezone: ctx.Timezone(),
+		Data:     viewData,
+		Model:    body.model,
+	})
+	if err != nil {
+		http.Error(res, err.Error(), StatusInternalServerError)
+		return
+	}
+
+	mimeType := bamgoo.Mimetype(ctx.Type, "text/html")
+	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
+	res.WriteHeader(ctx.Code)
+	fmt.Fprint(res, html)
+}
+
+func (inst *Instance) viewHelpers(ctx *Context) Map {
+	zone := ctx.Timezone()
+	return Map{
+		"language": func() string {
+			return ctx.Language()
+		},
+		"timezone": func() string {
+			return zone.String()
+		},
+		"format": func(format string, args ...interface{}) string {
+			if len(args) == 1 {
+				switch vv := args[0].(type) {
+				case time.Time:
+					return vv.In(zone).Format(format)
+				case int64:
+					// unix seconds range guard
+					if vv >= 31507200 && vv <= 31507200000 {
+						return time.Unix(vv, 0).In(zone).Format(format)
+					}
+				}
+			}
+			return fmt.Sprintf(format, args...)
+		},
+		"string": func(key string, args ...Any) string {
+			return ctx.String(strings.ReplaceAll(key, ".", "_"), args...)
+		},
+		"ctx": func() *Context {
+			return ctx
+		},
+	}
 }
