@@ -310,90 +310,76 @@ func (m *Module) Setup() {
 		return
 	}
 
-	names := map[string]struct{}{}
-
-	// ensure instances for configs
 	if len(m.configs) == 0 {
 		m.configs[bamgoo.DEFAULT] = m.defaultConfig
 	}
-	for name, cfg := range m.configs {
-		names[name] = struct{}{}
+
+	m.instances = make(map[string]*Instance, 0)
+
+	instanceNames := map[string]struct{}{}
+	for name := range m.configs {
+		name = strings.ToLower(name)
+		if name == "" {
+			name = bamgoo.DEFAULT
+		}
+		instanceNames[name] = struct{}{}
+	}
+	if len(instanceNames) == 0 {
+		instanceNames[bamgoo.DEFAULT] = struct{}{}
+	}
+
+	multiSite := false
+	for name := range instanceNames {
+		if name != bamgoo.DEFAULT {
+			multiSite = true
+			break
+		}
+	}
+	if !multiSite {
+		// Single-site mode: everything goes to default instance.
+		instanceNames = map[string]struct{}{bamgoo.DEFAULT: {}}
+	} else if m.needsDefaultInstance(instanceNames) {
+		// Multi-site mode: create default instance only when there are non-scoped definitions.
+		instanceNames[bamgoo.DEFAULT] = struct{}{}
+	}
+
+	for name := range instanceNames {
 		inst := m.ensureInstance(name)
-		inst.Config = mergeConfig(inst.Config, cfg)
+		cfg := m.defaultConfig
+		if c, ok := m.configs[name]; ok {
+			cfg = mergeConfig(cfg, c)
+		}
+		inst.Config = cfg
 		inst.Setting = inst.Config.Setting
 		inst.Cross = m.cross
-	}
-
-	for key := range m.routers {
-		instName, _ := splitPrefix(key)
-		if instName != "*" {
-			names[instName] = struct{}{}
-		}
-	}
-	for key := range m.filters {
-		instName, _ := splitPrefix(key)
-		if instName != "*" {
-			names[instName] = struct{}{}
-		}
-	}
-	for key := range m.handlers {
-		instName, _ := splitPrefix(key)
-		if instName != "*" {
-			names[instName] = struct{}{}
-		}
-	}
-
-	if len(names) == 0 {
-		names[bamgoo.DEFAULT] = struct{}{}
-	}
-
-	for name := range names {
-		inst := m.ensureInstance(name)
-		if cfg, ok := m.configs[name]; ok {
-			inst.Config = mergeConfig(inst.Config, cfg)
-		} else {
-			inst.Config = mergeConfig(inst.Config, m.defaultConfig)
-		}
-		inst.Setting = inst.Config.Setting
-		inst.Cross = m.cross
-
 		inst.routers = make(map[string]Router, 0)
 		inst.filters = make(map[string]Filter, 0)
 		inst.handlers = make(map[string]Handler, 0)
 	}
 
 	for key, router := range m.routers {
-		instName, routerName := splitPrefix(key)
-		if instName == "*" {
-			for _, inst := range m.instances {
+		targets, routerName := bindName(key, instanceNames, multiSite)
+		for _, target := range targets {
+			if inst, ok := m.instances[target]; ok {
 				applyRouter(inst, routerName, router)
 			}
-			continue
 		}
-		inst := m.ensureInstance(instName)
-		applyRouter(inst, routerName, router)
 	}
 	for key, filter := range m.filters {
-		instName, filterName := splitPrefix(key)
-		if instName == "*" {
-			for _, inst := range m.instances {
+		targets, filterName := bindName(key, instanceNames, multiSite)
+		for _, target := range targets {
+			if inst, ok := m.instances[target]; ok {
 				storeFilter(inst.filters, filterName, filter)
 			}
-			continue
 		}
-		inst := m.ensureInstance(instName)
-		storeFilter(inst.filters, filterName, filter)
 	}
 	for key, handler := range m.handlers {
-		instName, handlerName := splitPrefix(key)
-		if instName == "*" {
-			for _, inst := range m.instances {
+		targets, handlerName := bindName(key, instanceNames, multiSite)
+		for _, target := range targets {
+			if inst, ok := m.instances[target]; ok {
 				storeHandler(inst.handlers, handlerName, handler)
 			}
-			continue
 		}
-		inst := m.ensureInstance(instName)
-		storeHandler(inst.handlers, handlerName, handler)
 	}
 
 	for _, inst := range m.instances {
@@ -651,4 +637,68 @@ func splitPrefix(name string) (string, string) {
 		return parts[0], parts[1]
 	}
 	return bamgoo.DEFAULT, name
+}
+
+func bindName(name string, instances map[string]struct{}, multiSite bool) ([]string, string) {
+	name = strings.ToLower(name)
+	if name == "" {
+		return []string{bamgoo.DEFAULT}, ""
+	}
+
+	if strings.HasPrefix(name, "*.") {
+		targets := make([]string, 0, len(instances))
+		for instName := range instances {
+			targets = append(targets, instName)
+		}
+		return targets, strings.TrimPrefix(name, "*.")
+	}
+
+	if !multiSite {
+		return []string{bamgoo.DEFAULT}, name
+	}
+
+	prefix, rest := splitPrefix(name)
+	if _, ok := instances[prefix]; ok && rest != "" {
+		return []string{prefix}, rest
+	}
+	return []string{bamgoo.DEFAULT}, name
+}
+
+func (m *Module) needsDefaultInstance(instances map[string]struct{}) bool {
+	if _, ok := instances[bamgoo.DEFAULT]; ok {
+		return true
+	}
+
+	for key := range m.routers {
+		if requireDefaultForName(key, instances) {
+			return true
+		}
+	}
+	for key := range m.filters {
+		if requireDefaultForName(key, instances) {
+			return true
+		}
+	}
+	for key := range m.handlers {
+		if requireDefaultForName(key, instances) {
+			return true
+		}
+	}
+	return false
+}
+
+func requireDefaultForName(name string, instances map[string]struct{}) bool {
+	name = strings.ToLower(name)
+	if name == "" || strings.HasPrefix(name, "*.") {
+		return false
+	}
+
+	prefix, rest := splitPrefix(name)
+	if rest == "" {
+		return true
+	}
+	if _, ok := instances[prefix]; ok {
+		return false
+	}
+	return true
 }
