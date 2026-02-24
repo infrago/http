@@ -39,6 +39,9 @@ type (
 
 	Routing map[string]Router
 
+	// Routers defines batch router registration.
+	Routers map[string]Router
+
 	// Filter defines HTTP filter/interceptor.
 	Filter struct {
 		Name     string  `json:"name"`

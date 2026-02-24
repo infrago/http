@@ -1,13 +1,9 @@
 package http
 
 func (Router) RegistryComponent() string {
-	return "http.router"
+	return "http"
 }
 
-func (Filter) RegistryComponent() string {
-	return "http.filter"
-}
-
-func (Handler) RegistryComponent() string {
-	return "http.handler"
+func (Routers) RegistryComponent() string {
+	return "http"
 }

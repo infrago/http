@@ -116,10 +116,23 @@ func (m *Module) Register(name string, value Any) {
 		m.RegisterConfigs(v)
 	case Router:
 		m.RegisterRouter(name, v)
+	case Routers:
+		m.RegisterRouters(name, v)
 	case Filter:
 		m.RegisterFilter(name, v)
 	case Handler:
 		m.RegisterHandler(name, v)
+	}
+}
+
+// RegisterRouters registers multiple routers.
+func (m *Module) RegisterRouters(prefix string, routers Routers) {
+	for name, router := range routers {
+		target := name
+		if prefix != "" {
+			target = prefix + "." + name
+		}
+		m.RegisterRouter(target, router)
 	}
 }
 
