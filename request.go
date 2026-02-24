@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -62,36 +63,66 @@ func (inst *Instance) preprocessing(ctx *Context) {
 // finding handles static files.
 func (inst *Instance) finding(ctx *Context) {
 	if ctx.Name == "" {
-		isDir := false
-		file := ""
-
-		staticPath := path.Join(ctx.inst.Config.Static, ctx.Path)
-		if fi, err := os.Stat(staticPath); err == nil {
-			isDir = fi.IsDir()
-			file = staticPath
-		}
-
-		if isDir {
-			tempFile := file
-			file = ""
-			for _, doc := range ctx.inst.Config.Defaults {
-				docPath := path.Join(tempFile, doc)
-				if fi, err := os.Stat(docPath); err == nil && !fi.IsDir() {
-					file = docPath
-					break
+		file := resolveStaticFile(ctx.inst.Config.Static, ctx.Path, ctx.inst.Config.Defaults, module.fsys)
+		if file != "" && !strings.Contains(file, "../") {
+			if module.fsys != nil {
+				bts, err := fs.ReadFile(module.fsys, file)
+				if err == nil {
+					ext := path.Ext(file)
+					if strings.HasPrefix(ext, ".") {
+						ext = ext[1:]
+					}
+					ctx.Binary(bts, bamgoo.Mimetype(ext, "application/octet-stream"))
+					return
 				}
 			}
-		}
-
-		if file != "" && !strings.Contains(file, "../") {
 			ctx.File(file)
-		} else {
-			ctx.Found()
+			return
 		}
+		ctx.Found()
 		return
 	}
 
 	ctx.Next()
+}
+
+func resolveStaticFile(root, requestPath string, defaults []string, fsys fs.FS) string {
+	if root == "" {
+		return ""
+	}
+	cleanPath := path.Clean("/" + requestPath)
+	target := path.Join(root, cleanPath)
+
+	if fsys != nil {
+		if fi, err := fs.Stat(fsys, target); err == nil {
+			if fi.IsDir() {
+				for _, doc := range defaults {
+					docPath := path.Join(target, doc)
+					if ff, err := fs.Stat(fsys, docPath); err == nil && !ff.IsDir() {
+						return docPath
+					}
+				}
+				return ""
+			}
+			return target
+		}
+		return ""
+	}
+
+	fi, err := os.Stat(target)
+	if err != nil {
+		return ""
+	}
+	if fi.IsDir() {
+		for _, doc := range defaults {
+			docPath := path.Join(target, doc)
+			if ff, err := os.Stat(docPath); err == nil && !ff.IsDir() {
+				return docPath
+			}
+		}
+		return ""
+	}
+	return target
 }
 
 // crossing handles CORS.
