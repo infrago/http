@@ -64,7 +64,14 @@ func (inst *Instance) preprocessing(ctx *Context) {
 func (inst *Instance) finding(ctx *Context) {
 	if ctx.Name == "" {
 		fsys := bamgoo.AssetFS()
-		file := resolveStaticFile(ctx.inst.Config.Static, ctx.Path, ctx.inst.Config.Defaults, fsys)
+		staticRoot := ctx.inst.Config.Static
+		if staticRoot == "" {
+			staticRoot = "asset/statics"
+		}
+		file := resolveStaticFile(staticRoot, ctx.Path, ctx.inst.Config.Defaults, fsys)
+		if file == "" {
+			file = resolveStaticFile(path.Join(staticRoot, "shared"), ctx.Path, ctx.inst.Config.Defaults, fsys)
+		}
 		if file != "" && !strings.Contains(file, "../") {
 			if fsys != nil {
 				bts, err := bamgoo.AssetFile(file)
@@ -89,7 +96,7 @@ func (inst *Instance) finding(ctx *Context) {
 
 func resolveStaticFile(root, requestPath string, defaults []string, fsys fs.FS) string {
 	if root == "" {
-		return ""
+		root = "asset/statics"
 	}
 	cleanPath := path.Clean("/" + requestPath)
 	target := path.Join(root, cleanPath)
@@ -107,7 +114,7 @@ func resolveStaticFile(root, requestPath string, defaults []string, fsys fs.FS) 
 			}
 			return target
 		}
-		return ""
+		// fallback to local filesystem
 	}
 
 	fi, err := os.Stat(target)
