@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"io/fs"
 	"strings"
 	"sync"
@@ -541,6 +542,7 @@ func (m *Module) Start() {
 	}
 
 	m.started = true
+	fmt.Printf("bamgoo http module is running with %d connections, %d routers.\n", len(m.instances), len(m.routers))
 }
 
 func (m *Module) Stop() {
