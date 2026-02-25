@@ -26,7 +26,7 @@ var module = &Module{
 }
 
 func SetFS(fsys fs.FS) {
-	module.SetFS(fsys)
+	bamgoo.AssetFS(fsys)
 }
 
 type (
@@ -46,7 +46,6 @@ type (
 		routers  map[string]Router
 		filters  map[string]Filter
 		handlers map[string]Handler
-		fsys     fs.FS
 	}
 
 	Config struct {
@@ -129,12 +128,6 @@ func (m *Module) Register(name string, value Any) {
 	case Handler:
 		m.RegisterHandler(name, v)
 	}
-}
-
-func (m *Module) SetFS(fsys fs.FS) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	m.fsys = fsys
 }
 
 // RegisterRouters registers multiple routers.

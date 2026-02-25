@@ -63,10 +63,11 @@ func (inst *Instance) preprocessing(ctx *Context) {
 // finding handles static files.
 func (inst *Instance) finding(ctx *Context) {
 	if ctx.Name == "" {
-		file := resolveStaticFile(ctx.inst.Config.Static, ctx.Path, ctx.inst.Config.Defaults, module.fsys)
+		fsys := bamgoo.AssetFS()
+		file := resolveStaticFile(ctx.inst.Config.Static, ctx.Path, ctx.inst.Config.Defaults, fsys)
 		if file != "" && !strings.Contains(file, "../") {
-			if module.fsys != nil {
-				bts, err := fs.ReadFile(module.fsys, file)
+			if fsys != nil {
+				bts, err := bamgoo.AssetFile(file)
 				if err == nil {
 					ext := path.Ext(file)
 					if strings.HasPrefix(ext, ".") {
