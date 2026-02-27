@@ -369,16 +369,17 @@ func (ctx *Context) Echo(res Res, args ...Any) {
 }
 
 func (ctx *Context) uploadFile(patterns ...string) (*os.File, error) {
-	if dir := ctx.inst.Config.Upload; dir != "" {
-		pattern := ""
-		if len(patterns) > 0 {
-			pattern = patterns[0]
-		}
-		file, err := os.CreateTemp(dir, pattern)
-		if err == nil {
-			ctx.uploadfiles = append(ctx.uploadfiles, file.Name())
-		}
-		return file, err
+	pattern := ""
+	if len(patterns) > 0 {
+		pattern = patterns[0]
 	}
-	return ctx.TempFile(patterns...)
+	dir := ctx.inst.Config.Upload
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	file, err := os.CreateTemp(dir, pattern)
+	if err == nil {
+		ctx.uploadfiles = append(ctx.uploadfiles, file.Name())
+	}
+	return file, err
 }
