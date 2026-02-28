@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -64,6 +65,26 @@ func (inst *Instance) Serve(name string, params Map, res http.ResponseWriter, re
 	} else {
 		ctx.Host = ctx.reader.Host
 	}
+
+	span := ctx.Begin("http:"+ctx.Name, bamgoo.TraceAttrs("bamgoo", bamgoo.TraceKindServer, ctx.Name, Map{
+		"module":    "http",
+		"operation": "serve",
+		"method":    ctx.Method,
+		"path":      ctx.Path,
+		"host":      ctx.Host,
+	}))
+	ctx.Header("traceparent", ctx.TraceParent())
+	defer func() {
+		if ctx.Code >= StatusInternalServerError {
+			span.End(fmt.Errorf("http status %d", ctx.Code))
+			return
+		}
+		if res := ctx.Result(); res != nil && res.Fail() {
+			span.End(fmt.Errorf("%s", res.Error()))
+			return
+		}
+		span.End()
+	}()
 
 	inst.open(ctx)
 	inst.close(ctx)

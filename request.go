@@ -29,6 +29,9 @@ func (inst *Instance) preprocessing(ctx *Context) {
 	if token != "" {
 		ctx.Verify(token)
 	}
+	if tp := ctx.Header("traceparent"); tp != "" {
+		ctx.ParseTraceParent(tp)
+	}
 
 	// Detect AJAX
 	if ctx.Header("X-Requested-With") != "" ||
