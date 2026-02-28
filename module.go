@@ -50,10 +50,11 @@ type (
 	}
 
 	Config struct {
-		Driver string
-		Port   int
-		Host   string
-		Domain string
+		Driver  string
+		Port    int
+		Host    string
+		Domain  string
+		Require bool
 
 		CertFile string
 		KeyFile  string
@@ -246,6 +247,9 @@ func (m *Module) configure(name string, conf Map) {
 	if v, ok := conf["domain"].(string); ok {
 		cfg.Domain = v
 	}
+	if v, ok := conf["require"].(bool); ok {
+		cfg.Require = v
+	}
 	if v, ok := conf["cert"].(string); ok {
 		cfg.CertFile = v
 	}
@@ -405,6 +409,14 @@ func (m *Module) Setup() {
 		m.applyDefaults(inst)
 		m.buildInstance(inst)
 	}
+
+	active := make(map[string]*Instance, 0)
+	for name, inst := range m.instances {
+		if inst.Config.Require || len(inst.routerInfos) > 0 {
+			active[name] = inst
+		}
+	}
+	m.instances = active
 }
 
 func (m *Module) applyDefaults(inst *Instance) {
@@ -604,6 +616,9 @@ func mergeConfig(baseCfg, newCfg Config) Config {
 	}
 	if newCfg.Domain != "" {
 		out.Domain = newCfg.Domain
+	}
+	if newCfg.Require {
+		out.Require = true
 	}
 	if newCfg.CertFile != "" {
 		out.CertFile = newCfg.CertFile
