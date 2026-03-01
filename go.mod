@@ -1,4 +1,4 @@
-module github.com/bamgoo/http
+module github.com/infrago/http
 
 go 1.25.3
 

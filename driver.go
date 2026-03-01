@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	. "github.com/bamgoo/base"
+	. "github.com/infrago/base"
 )
 
 type (

@@ -1,2 +1,2 @@
 # http
-bamgoo http module.
+infrago http module.

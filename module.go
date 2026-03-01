@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bamgoo/bamgoo"
-	. "github.com/bamgoo/base"
+	"github.com/infrago/infra"
+	. "github.com/infrago/base"
 )
 
 func init() {
-	bamgoo.Mount(module)
+	infra.Mount(module)
 }
 
 var module = &Module{
@@ -27,7 +27,7 @@ var module = &Module{
 }
 
 func SetFS(fsys fs.FS) {
-	bamgoo.AssetFS(fsys)
+	infra.AssetFS(fsys)
 }
 
 type (
@@ -155,7 +155,7 @@ func (m *Module) RegisterDriver(name string, driver Driver) {
 		name = DEFAULT
 	}
 
-	if bamgoo.Override() {
+	if infra.Override() {
 		m.drivers[name] = driver
 	} else {
 		if _, ok := m.drivers[name]; !ok {
@@ -174,9 +174,9 @@ func (m *Module) RegisterConfig(name string, config Config) {
 	}
 
 	if name == "" {
-		name = bamgoo.DEFAULT
+		name = infra.DEFAULT
 	}
-	if bamgoo.Override() {
+	if infra.Override() {
 		m.configs[name] = config
 	} else {
 		if _, ok := m.configs[name]; !ok {
@@ -219,7 +219,7 @@ func (m *Module) Config(global Map) {
 		}
 	}
 	if len(rootConfig) > 0 {
-		m.configure(bamgoo.DEFAULT, rootConfig)
+		m.configure(infra.DEFAULT, rootConfig)
 	}
 }
 
@@ -305,7 +305,7 @@ func (m *Module) configure(name string, conf Map) {
 
 func (m *Module) ensureInstance(name string) *Instance {
 	if name == "" {
-		name = bamgoo.DEFAULT
+		name = infra.DEFAULT
 	}
 	inst, ok := m.instances[name]
 	if ok {
@@ -334,7 +334,7 @@ func (m *Module) Setup() {
 	}
 
 	if len(m.configs) == 0 {
-		m.configs[bamgoo.DEFAULT] = m.defaultConfig
+		m.configs[infra.DEFAULT] = m.defaultConfig
 	}
 
 	m.instances = make(map[string]*Instance, 0)
@@ -343,27 +343,27 @@ func (m *Module) Setup() {
 	for name := range m.configs {
 		name = strings.ToLower(name)
 		if name == "" {
-			name = bamgoo.DEFAULT
+			name = infra.DEFAULT
 		}
 		instanceNames[name] = struct{}{}
 	}
 	if len(instanceNames) == 0 {
-		instanceNames[bamgoo.DEFAULT] = struct{}{}
+		instanceNames[infra.DEFAULT] = struct{}{}
 	}
 
 	multiSite := false
 	for name := range instanceNames {
-		if name != bamgoo.DEFAULT {
+		if name != infra.DEFAULT {
 			multiSite = true
 			break
 		}
 	}
 	if !multiSite {
 		// Single-site mode: everything goes to default instance.
-		instanceNames = map[string]struct{}{bamgoo.DEFAULT: {}}
+		instanceNames = map[string]struct{}{infra.DEFAULT: {}}
 	} else if m.needsDefaultInstance(instanceNames) {
 		// Multi-site mode: create default instance only when there are non-scoped definitions.
-		instanceNames[bamgoo.DEFAULT] = struct{}{}
+		instanceNames[infra.DEFAULT] = struct{}{}
 	}
 
 	for name := range instanceNames {
@@ -554,7 +554,7 @@ func (m *Module) Start() {
 	}
 
 	m.started = true
-	fmt.Printf("bamgoo http module is running with %d connections, %d routers.\n", len(m.instances), len(m.routers))
+	fmt.Printf("infrago http module is running with %d connections, %d routers.\n", len(m.instances), len(m.routers))
 }
 
 func (m *Module) Stop() {
@@ -665,19 +665,19 @@ func mergeConfig(baseCfg, newCfg Config) Config {
 func splitPrefix(name string) (string, string) {
 	name = strings.ToLower(name)
 	if name == "" {
-		return bamgoo.DEFAULT, ""
+		return infra.DEFAULT, ""
 	}
 	if strings.Contains(name, ".") {
 		parts := strings.SplitN(name, ".", 2)
 		return parts[0], parts[1]
 	}
-	return bamgoo.DEFAULT, name
+	return infra.DEFAULT, name
 }
 
 func bindName(name string, instances map[string]struct{}, multiSite bool) ([]string, string) {
 	name = strings.ToLower(name)
 	if name == "" {
-		return []string{bamgoo.DEFAULT}, ""
+		return []string{infra.DEFAULT}, ""
 	}
 
 	if strings.HasPrefix(name, "*.") {
@@ -689,18 +689,18 @@ func bindName(name string, instances map[string]struct{}, multiSite bool) ([]str
 	}
 
 	if !multiSite {
-		return []string{bamgoo.DEFAULT}, name
+		return []string{infra.DEFAULT}, name
 	}
 
 	prefix, rest := splitPrefix(name)
 	if _, ok := instances[prefix]; ok && rest != "" {
 		return []string{prefix}, rest
 	}
-	return []string{bamgoo.DEFAULT}, name
+	return []string{infra.DEFAULT}, name
 }
 
 func (m *Module) needsDefaultInstance(instances map[string]struct{}) bool {
-	if _, ok := instances[bamgoo.DEFAULT]; ok {
+	if _, ok := instances[infra.DEFAULT]; ok {
 		return true
 	}
 

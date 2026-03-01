@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bamgoo/bamgoo"
-	. "github.com/bamgoo/base"
-	"github.com/bamgoo/view"
+	"github.com/infrago/infra"
+	. "github.com/infrago/base"
+	"github.com/infrago/view"
 )
 
 type (
@@ -142,7 +142,7 @@ func (inst *Instance) bodyText(ctx *Context, body httpTextBody) {
 		ctx.Type = "text"
 	}
 
-	mimeType := bamgoo.Mimetype(ctx.Type, "text/plain")
+	mimeType := infra.Mimetype(ctx.Type, "text/plain")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	res.WriteHeader(ctx.Code)
@@ -156,7 +156,7 @@ func (inst *Instance) bodyHtml(ctx *Context, body httpHtmlBody) {
 		ctx.Type = "html"
 	}
 
-	mimeType := bamgoo.Mimetype(ctx.Type, "text/html")
+	mimeType := infra.Mimetype(ctx.Type, "text/html")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	res.WriteHeader(ctx.Code)
@@ -176,7 +176,7 @@ func (inst *Instance) bodyJson(ctx *Context, body httpJsonBody) {
 		return
 	}
 
-	mimeType := bamgoo.Mimetype(ctx.Type, "application/json")
+	mimeType := infra.Mimetype(ctx.Type, "application/json")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 	res.WriteHeader(ctx.Code)
 	fmt.Fprint(res, string(bytes))
@@ -195,7 +195,7 @@ func (inst *Instance) bodyJsonp(ctx *Context, body httpJsonpBody) {
 		return
 	}
 
-	mimeType := bamgoo.Mimetype(ctx.Type, "application/javascript")
+	mimeType := infra.Mimetype(ctx.Type, "application/javascript")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	res.WriteHeader(ctx.Code)
@@ -226,7 +226,7 @@ func (inst *Instance) bodyFile(ctx *Context, body httpFileBody) {
 		ctx.Type = "file"
 	}
 
-	mimeType := bamgoo.Mimetype(ctx.Type, "application/octet-stream")
+	mimeType := infra.Mimetype(ctx.Type, "application/octet-stream")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	if body.name != "" {
@@ -243,7 +243,7 @@ func (inst *Instance) bodyBinary(ctx *Context, body httpBinaryBody) {
 		ctx.Type = "file"
 	}
 
-	mimeType := bamgoo.Mimetype(ctx.Type, "application/octet-stream")
+	mimeType := infra.Mimetype(ctx.Type, "application/octet-stream")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	if body.name != "" {
@@ -261,7 +261,7 @@ func (inst *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 		ctx.Type = "file"
 	}
 
-	mimeType := bamgoo.Mimetype(ctx.Type, "application/octet-stream")
+	mimeType := infra.Mimetype(ctx.Type, "application/octet-stream")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	if body.name != "" {
@@ -304,7 +304,7 @@ func (inst *Instance) bodyView(ctx *Context, body httpViewBody) {
 		return
 	}
 
-	mimeType := bamgoo.Mimetype(ctx.Type, "text/html")
+	mimeType := infra.Mimetype(ctx.Type, "text/html")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 	res.WriteHeader(ctx.Code)
 	fmt.Fprint(res, html)

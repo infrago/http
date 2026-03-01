@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	. "github.com/bamgoo/base"
+	. "github.com/infrago/base"
 )
 
 func init() {

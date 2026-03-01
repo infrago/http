@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bamgoo/bamgoo"
-	. "github.com/bamgoo/base"
+	"github.com/infrago/infra"
+	. "github.com/infrago/base"
 )
 
 type (
@@ -83,7 +83,7 @@ func (m *Module) RegisterRouter(name string, config Router) {
 	}
 
 	name = strings.ToLower(name)
-	if bamgoo.Override() {
+	if infra.Override() {
 		m.routers[name] = config
 	} else {
 		if _, ok := m.routers[name]; !ok {
@@ -101,7 +101,7 @@ func (m *Module) RegisterFilter(name string, config Filter) {
 		return
 	}
 	name = strings.ToLower(name)
-	if bamgoo.Override() {
+	if infra.Override() {
 		m.filters[name] = config
 	} else {
 		if _, ok := m.filters[name]; !ok {
@@ -119,7 +119,7 @@ func (m *Module) RegisterHandler(name string, config Handler) {
 		return
 	}
 	name = strings.ToLower(name)
-	if bamgoo.Override() {
+	if infra.Override() {
 		m.handlers[name] = config
 	} else {
 		if _, ok := m.handlers[name]; !ok {
@@ -239,7 +239,7 @@ func expandRouter(routerName string, config Router) map[string]Router {
 func storeRouters(target map[string]Router, routers map[string]Router) {
 	for key, router := range routers {
 		key = strings.ToLower(key)
-		if bamgoo.Override() {
+		if infra.Override() {
 			target[key] = router
 		} else {
 			if _, ok := target[key]; !ok {
@@ -251,7 +251,7 @@ func storeRouters(target map[string]Router, routers map[string]Router) {
 
 func storeFilter(target map[string]Filter, name string, config Filter) {
 	name = strings.ToLower(name)
-	if bamgoo.Override() {
+	if infra.Override() {
 		target[name] = config
 	} else {
 		if _, ok := target[name]; !ok {
@@ -262,7 +262,7 @@ func storeFilter(target map[string]Filter, name string, config Filter) {
 
 func storeHandler(target map[string]Handler, name string, config Handler) {
 	name = strings.ToLower(name)
-	if bamgoo.Override() {
+	if infra.Override() {
 		target[name] = config
 	} else {
 		if _, ok := target[name]; !ok {

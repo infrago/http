@@ -8,13 +8,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bamgoo/bamgoo"
-	. "github.com/bamgoo/base"
+	"github.com/infrago/infra"
+	. "github.com/infrago/base"
 )
 
 type (
 	Context struct {
-		*bamgoo.Meta
+		*infra.Meta
 		inst *Instance
 
 		uploadfiles []string

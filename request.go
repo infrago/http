@@ -10,8 +10,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/bamgoo/bamgoo"
-	. "github.com/bamgoo/base"
+	"github.com/infrago/infra"
+	. "github.com/infrago/base"
 )
 
 // preprocessing handles token and language.
@@ -48,7 +48,7 @@ func (inst *Instance) preprocessing(ctx *Context) {
 				if i := strings.Index(accept, ";"); i > 0 {
 					accept = accept[0:i]
 				}
-				for lang, config := range bamgoo.Languages() {
+				for lang, config := range infra.Languages() {
 					for _, acccc := range config.Accepts {
 						if strings.EqualFold(acccc, accept) {
 							ctx.Language(lang)
@@ -66,7 +66,7 @@ func (inst *Instance) preprocessing(ctx *Context) {
 // finding handles static files.
 func (inst *Instance) finding(ctx *Context) {
 	if ctx.Name == "" {
-		fsys := bamgoo.AssetFS()
+		fsys := infra.AssetFS()
 		staticRoot := ctx.inst.Config.Static
 		if staticRoot == "" {
 			staticRoot = "asset/statics"
@@ -77,13 +77,13 @@ func (inst *Instance) finding(ctx *Context) {
 		}
 		if file != "" && !strings.Contains(file, "../") {
 			if fsys != nil {
-				bts, err := bamgoo.AssetFile(file)
+				bts, err := infra.AssetFile(file)
 				if err == nil {
 					ext := path.Ext(file)
 					if strings.HasPrefix(ext, ".") {
 						ext = ext[1:]
 					}
-					ctx.Binary(bts, bamgoo.Mimetype(ext, "application/octet-stream"))
+					ctx.Binary(bts, infra.Mimetype(ext, "application/octet-stream"))
 					return
 				}
 			}
@@ -188,7 +188,7 @@ func (inst *Instance) crossing(ctx *Context) {
 func (inst *Instance) authorizing(ctx *Context) {
 	if ctx.Config.Sign {
 		if !ctx.Signed() {
-			ctx.Result(bamgoo.Unsigned)
+			ctx.Result(infra.Unsigned)
 			inst.denied(ctx)
 			return
 		}
@@ -196,7 +196,7 @@ func (inst *Instance) authorizing(ctx *Context) {
 
 	if ctx.Config.Auth {
 		if !ctx.Authed() {
-			ctx.Result(bamgoo.Unauthed)
+			ctx.Result(infra.Unauthed)
 			inst.denied(ctx)
 			return
 		}
@@ -336,7 +336,7 @@ func (inst *Instance) parsing(ctx *Context) {
 func (inst *Instance) arguing(ctx *Context) {
 	if ctx.Config.Args != nil {
 		argsValue := Map{}
-		res := bamgoo.Mapping(ctx.Config.Args, ctx.Value, argsValue, ctx.Config.Nullable, false, ctx.Timezone())
+		res := infra.Mapping(ctx.Config.Args, ctx.Value, argsValue, ctx.Config.Nullable, false, ctx.Timezone())
 		if res != nil && res.Fail() {
 			ctx.Failed(res)
 			return
