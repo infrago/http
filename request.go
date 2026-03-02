@@ -10,8 +10,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/infrago/infra"
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 // preprocessing handles token and language.
@@ -90,7 +90,7 @@ func (inst *Instance) finding(ctx *Context) {
 			ctx.File(file)
 			return
 		}
-		ctx.Found()
+		ctx.NotFound()
 		return
 	}
 
@@ -188,16 +188,14 @@ func (inst *Instance) crossing(ctx *Context) {
 func (inst *Instance) authorizing(ctx *Context) {
 	if ctx.Config.Sign {
 		if !ctx.Signed() {
-			ctx.Result(infra.Unsigned)
-			inst.denied(ctx)
+			ctx.Unsign(infra.Unsigned)
 			return
 		}
 	}
 
 	if ctx.Config.Auth {
 		if !ctx.Authed() {
-			ctx.Result(infra.Unauthed)
-			inst.denied(ctx)
+			ctx.Unauth(infra.Unauthed)
 			return
 		}
 	}
@@ -338,7 +336,7 @@ func (inst *Instance) arguing(ctx *Context) {
 		argsValue := Map{}
 		res := infra.Mapping(ctx.Config.Args, ctx.Value, argsValue, ctx.Config.Nullable, false, ctx.Timezone())
 		if res != nil && res.Fail() {
-			ctx.Failed(res)
+			ctx.Fail(res)
 			return
 		}
 		for k, v := range argsValue {

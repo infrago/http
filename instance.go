@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/infrago/infra"
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 func (inst *Instance) newContext() *Context {
@@ -39,13 +39,22 @@ func (inst *Instance) close(ctx *Context) {
 // Serve handles incoming HTTP request.
 func (inst *Instance) Serve(name string, params Map, res http.ResponseWriter, req *http.Request) {
 	ctx := inst.newContext()
+	out := wrapResponseWriter(res)
 
 	ctx.reader = req
-	ctx.writer = res
+	ctx.writer = out
+	ctx.output = out
 
 	if info, ok := inst.routerInfos[name]; ok {
-		ctx.Name = info.Router
+		if info.Entry != "" {
+			ctx.Name = info.Entry
+		} else {
+			ctx.Name = info.Router
+		}
 		if cfg, ok := inst.routers[ctx.Name]; ok {
+			ctx.Config = cfg
+			ctx.Setting = cfg.Setting
+		} else if cfg, ok := inst.routers[info.Router]; ok {
 			ctx.Config = cfg
 			ctx.Setting = cfg.Setting
 		}
@@ -64,6 +73,9 @@ func (inst *Instance) Serve(name string, params Map, res http.ResponseWriter, re
 	} else {
 		ctx.Host = ctx.reader.Host
 	}
+	ctx.Site = contextSiteName(inst.Name)
+	ctx.Domain = contextDomain(ctx.Host)
+	ctx.RootDomain = contextRootDomain(ctx.Host)
 
 	span := ctx.Begin("http:"+ctx.Name, infra.TraceAttrs("infrago", infra.TraceKindHTTP, ctx.Name, Map{
 		"module":    "http",
@@ -86,7 +98,58 @@ func (inst *Instance) Serve(name string, params Map, res http.ResponseWriter, re
 	}()
 
 	inst.open(ctx)
+	if ctx.output != nil && ctx.output.Committed() {
+		ctx.Code = ctx.output.Status()
+	}
 	inst.close(ctx)
+}
+
+func contextSiteName(name string) string {
+	name = strings.TrimSpace(strings.ToLower(name))
+	if name == "" || name == strings.ToLower(infra.DEFAULT) {
+		return ""
+	}
+	return name
+}
+
+func contextDomain(host string) string {
+	host = strings.TrimSpace(strings.ToLower(host))
+	if host == "" {
+		return ""
+	}
+	if strings.Contains(host, ":") {
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		return ""
+	}
+	parts := strings.Split(host, ".")
+	if len(parts) < 2 {
+		return host
+	}
+	return strings.Join(parts[1:], ".")
+}
+
+func contextRootDomain(host string) string {
+	host = strings.TrimSpace(strings.ToLower(host))
+	if host == "" {
+		return ""
+	}
+	if strings.Contains(host, ":") {
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		return ""
+	}
+	parts := strings.Split(host, ".")
+	if len(parts) < 2 {
+		return host
+	}
+	return strings.Join(parts[len(parts)-2:], ".")
 }
 
 func (inst *Instance) open(ctx *Context) {
@@ -108,7 +171,27 @@ func (inst *Instance) serve(ctx *Context) {
 
 	ctx.Next()
 
+	inst.handle(ctx)
 	inst.response(ctx)
+}
+
+func (inst *Instance) handle(ctx *Context) {
+	handling := ctx.handling
+	ctx.handling = ""
+	switch handling {
+	case "notfound":
+		inst.notFound(ctx)
+	case "error":
+		inst.error(ctx)
+	case "failed":
+		inst.failed(ctx)
+	case "unsigned":
+		inst.unsigned(ctx)
+	case "unauthed":
+		inst.unauthed(ctx)
+	case "denied":
+		inst.denied(ctx)
+	}
 }
 
 func (inst *Instance) request(ctx *Context) {
@@ -141,22 +224,21 @@ func (inst *Instance) response(ctx *Context) {
 	ctx.clear()
 
 	ctx.next(inst.responseFilters...)
+	ctx.next(inst.body)
 	ctx.Next()
-
-	inst.body(ctx)
 }
 
-func (inst *Instance) found(ctx *Context) {
+func (inst *Instance) notFound(ctx *Context) {
 	ctx.clear()
 
 	if ctx.Code <= 0 {
 		ctx.Code = StatusNotFound
 	}
 
-	if ctx.Config.Found != nil {
-		ctx.next(ctx.Config.Found)
+	if ctx.Config.NotFound != nil {
+		ctx.next(ctx.Config.NotFound)
 	}
-	ctx.next(inst.foundHandlers...)
+	ctx.next(inst.notFoundHandlers...)
 	ctx.next(inst.foundDefault)
 
 	ctx.Next()
@@ -216,6 +298,40 @@ func (inst *Instance) denied(ctx *Context) {
 	if ctx.Config.Denied != nil {
 		ctx.next(ctx.Config.Denied)
 	}
+	ctx.next(inst.deniedHandlers...)
+	ctx.next(inst.deniedDefault)
+
+	ctx.Next()
+}
+
+func (inst *Instance) unsigned(ctx *Context) {
+	ctx.clear()
+
+	if ctx.Code <= 0 {
+		ctx.Code = StatusUnauthorized
+	}
+
+	if ctx.Config.Unsigned != nil {
+		ctx.next(ctx.Config.Unsigned)
+	}
+	ctx.next(inst.unsignedHandlers...)
+	ctx.next(inst.deniedHandlers...)
+	ctx.next(inst.deniedDefault)
+
+	ctx.Next()
+}
+
+func (inst *Instance) unauthed(ctx *Context) {
+	ctx.clear()
+
+	if ctx.Code <= 0 {
+		ctx.Code = StatusUnauthorized
+	}
+
+	if ctx.Config.Unauthed != nil {
+		ctx.next(ctx.Config.Unauthed)
+	}
+	ctx.next(inst.unauthedHandlers...)
 	ctx.next(inst.deniedHandlers...)
 	ctx.next(inst.deniedDefault)
 

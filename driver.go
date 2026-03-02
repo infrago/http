@@ -33,6 +33,7 @@ type (
 		Method string
 		Uri    string
 		Router string
+		Entry  string
 		Args   Vars
 	}
 )

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/infrago/infra"
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 	"github.com/infrago/view"
 )
 
@@ -55,6 +55,39 @@ type (
 	}
 	httpStatusBody string
 )
+
+func (inst *Instance) bodyFail(ctx *Context, err error) {
+	if err == nil {
+		return
+	}
+
+	ctx.Result(infra.Fail.With(err.Error()))
+
+	if ctx.output != nil && ctx.output.Committed() {
+		if ctx.Code <= 0 {
+			ctx.Code = ctx.output.Status()
+		}
+		return
+	}
+
+	if ctx.failedBody {
+		if ctx.Code <= 0 {
+			ctx.Code = StatusInternalServerError
+		}
+		ctx.writer.Header().Set("Content-Type", "text/plain; charset="+ctx.Charset())
+		ctx.writer.WriteHeader(ctx.Code)
+		_, _ = fmt.Fprint(ctx.writer, StatusText(ctx.Code))
+		return
+	}
+
+	ctx.failedBody = true
+	if ctx.Code <= 0 || ctx.Code < StatusInternalServerError {
+		ctx.Code = StatusInternalServerError
+	}
+	ctx.handling = "error"
+	inst.handle(ctx)
+	inst.body(ctx)
+}
 
 func (inst *Instance) body(ctx *Context) {
 	if ctx.Code <= 0 {
@@ -132,6 +165,9 @@ func (inst *Instance) bodyStatus(ctx *Context, body httpStatusBody) {
 }
 
 func (inst *Instance) bodyGoto(ctx *Context, body httpGotoBody) {
+	if ctx.Code <= 0 {
+		ctx.Code = StatusFound
+	}
 	http.Redirect(ctx.writer, ctx.reader, body.url, StatusFound)
 }
 
@@ -146,7 +182,9 @@ func (inst *Instance) bodyText(ctx *Context, body httpTextBody) {
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	res.WriteHeader(ctx.Code)
-	fmt.Fprint(res, body.text)
+	if _, err := fmt.Fprint(res, body.text); err != nil {
+		inst.bodyFail(ctx, err)
+	}
 }
 
 func (inst *Instance) bodyHtml(ctx *Context, body httpHtmlBody) {
@@ -160,7 +198,9 @@ func (inst *Instance) bodyHtml(ctx *Context, body httpHtmlBody) {
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	res.WriteHeader(ctx.Code)
-	fmt.Fprint(res, body.html)
+	if _, err := fmt.Fprint(res, body.html); err != nil {
+		inst.bodyFail(ctx, err)
+	}
 }
 
 func (inst *Instance) bodyJson(ctx *Context, body httpJsonBody) {
@@ -172,14 +212,16 @@ func (inst *Instance) bodyJson(ctx *Context, body httpJsonBody) {
 
 	bytes, err := json.Marshal(body.json)
 	if err != nil {
-		http.Error(res, err.Error(), StatusInternalServerError)
+		inst.bodyFail(ctx, err)
 		return
 	}
 
 	mimeType := infra.Mimetype(ctx.Type, "application/json")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 	res.WriteHeader(ctx.Code)
-	fmt.Fprint(res, string(bytes))
+	if _, err := fmt.Fprint(res, string(bytes)); err != nil {
+		inst.bodyFail(ctx, err)
+	}
 }
 
 func (inst *Instance) bodyJsonp(ctx *Context, body httpJsonpBody) {
@@ -191,7 +233,7 @@ func (inst *Instance) bodyJsonp(ctx *Context, body httpJsonpBody) {
 
 	bytes, err := json.Marshal(body.json)
 	if err != nil {
-		http.Error(res, err.Error(), StatusInternalServerError)
+		inst.bodyFail(ctx, err)
 		return
 	}
 
@@ -199,7 +241,9 @@ func (inst *Instance) bodyJsonp(ctx *Context, body httpJsonpBody) {
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 
 	res.WriteHeader(ctx.Code)
-	fmt.Fprintf(res, "%s(%s);", body.callback, string(bytes))
+	if _, err := fmt.Fprintf(res, "%s(%s);", body.callback, string(bytes)); err != nil {
+		inst.bodyFail(ctx, err)
+	}
 }
 
 func (inst *Instance) bodyEcho(ctx *Context, body httpEchoBody) {
@@ -251,7 +295,9 @@ func (inst *Instance) bodyBinary(ctx *Context, body httpBinaryBody) {
 	}
 
 	res.WriteHeader(ctx.Code)
-	res.Write(body.bytes)
+	if _, err := res.Write(body.bytes); err != nil {
+		inst.bodyFail(ctx, err)
+	}
 }
 
 func (inst *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
@@ -273,7 +319,9 @@ func (inst *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 	}
 
 	res.WriteHeader(ctx.Code)
-	io.Copy(res, body.buffer)
+	if _, err := io.Copy(res, body.buffer); err != nil {
+		inst.bodyFail(ctx, err)
+	}
 	body.buffer.Close()
 }
 
@@ -300,14 +348,16 @@ func (inst *Instance) bodyView(ctx *Context, body httpViewBody) {
 		Model:    body.model,
 	})
 	if err != nil {
-		http.Error(res, err.Error(), StatusInternalServerError)
+		inst.bodyFail(ctx, err)
 		return
 	}
 
 	mimeType := infra.Mimetype(ctx.Type, "text/html")
 	res.Header().Set("Content-Type", fmt.Sprintf("%v; charset=%v", mimeType, ctx.Charset()))
 	res.WriteHeader(ctx.Code)
-	fmt.Fprint(res, html)
+	if _, err := fmt.Fprint(res, html); err != nil {
+		inst.bodyFail(ctx, err)
+	}
 }
 
 func (inst *Instance) viewHelpers(ctx *Context) Map {

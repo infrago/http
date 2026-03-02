@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/infrago/infra"
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 type (
@@ -17,6 +17,7 @@ type (
 		Method   string
 		Uri      string   `json:"uri"`
 		Uris     []string `json:"uris"`
+		Key      string   `json:"-"`
 		Name     string   `json:"name"`
 		Desc     string   `json:"desc"`
 		Nullable bool     `json:"-"`
@@ -31,10 +32,12 @@ type (
 		Sign bool `json:"sign"`
 		Auth bool `json:"auth"`
 
-		Found  ctxFunc `json:"-"`
-		Error  ctxFunc `json:"-"`
-		Failed ctxFunc `json:"-"`
-		Denied ctxFunc `json:"-"`
+		NotFound ctxFunc `json:"-"`
+		Error    ctxFunc `json:"-"`
+		Failed   ctxFunc `json:"-"`
+		Unsigned ctxFunc `json:"-"`
+		Unauthed ctxFunc `json:"-"`
+		Denied   ctxFunc `json:"-"`
 	}
 
 	Routing map[string]Router
@@ -54,12 +57,14 @@ type (
 
 	// Handler defines HTTP handler for errors.
 	Handler struct {
-		Name   string  `json:"name"`
-		Desc   string  `json:"desc"`
-		Found  ctxFunc `json:"-"`
-		Error  ctxFunc `json:"-"`
-		Failed ctxFunc `json:"-"`
-		Denied ctxFunc `json:"-"`
+		Name     string  `json:"name"`
+		Desc     string  `json:"desc"`
+		NotFound ctxFunc `json:"-"`
+		Error    ctxFunc `json:"-"`
+		Failed   ctxFunc `json:"-"`
+		Unsigned ctxFunc `json:"-"`
+		Unauthed ctxFunc `json:"-"`
+		Denied   ctxFunc `json:"-"`
 	}
 
 	// File represents uploaded file info.
@@ -83,6 +88,7 @@ func (m *Module) RegisterRouter(name string, config Router) {
 	}
 
 	name = strings.ToLower(name)
+	config.Key = name
 	if infra.Override() {
 		m.routers[name] = config
 	} else {
@@ -210,14 +216,20 @@ func expandRouter(routerName string, config Router) map[string]Router {
 			if methodConfig.Actions != nil {
 				realConfig.Actions = methodConfig.Actions
 			}
-			if methodConfig.Found != nil {
-				realConfig.Found = methodConfig.Found
+			if methodConfig.NotFound != nil {
+				realConfig.NotFound = methodConfig.NotFound
 			}
 			if methodConfig.Error != nil {
 				realConfig.Error = methodConfig.Error
 			}
 			if methodConfig.Failed != nil {
 				realConfig.Failed = methodConfig.Failed
+			}
+			if methodConfig.Unsigned != nil {
+				realConfig.Unsigned = methodConfig.Unsigned
+			}
+			if methodConfig.Unauthed != nil {
+				realConfig.Unauthed = methodConfig.Unauthed
 			}
 			if methodConfig.Denied != nil {
 				realConfig.Denied = methodConfig.Denied

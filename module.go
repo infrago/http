@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/infrago/infra"
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 func init() {
@@ -105,10 +105,12 @@ type (
 		executeFilters  []ctxFunc
 		responseFilters []ctxFunc
 
-		foundHandlers  []ctxFunc
-		errorHandlers  []ctxFunc
-		failedHandlers []ctxFunc
-		deniedHandlers []ctxFunc
+		notFoundHandlers []ctxFunc
+		errorHandlers    []ctxFunc
+		failedHandlers   []ctxFunc
+		unsignedHandlers []ctxFunc
+		unauthedHandlers []ctxFunc
+		deniedHandlers   []ctxFunc
 	}
 )
 
@@ -452,6 +454,7 @@ func (m *Module) buildInstance(inst *Instance) {
 				Method: router.Method,
 				Uri:    uri,
 				Router: key,
+				Entry:  router.Key,
 				Args:   router.Args,
 			}
 		}
@@ -477,20 +480,28 @@ func (m *Module) buildInstance(inst *Instance) {
 		}
 	}
 
-	inst.foundHandlers = make([]ctxFunc, 0)
+	inst.notFoundHandlers = make([]ctxFunc, 0)
 	inst.errorHandlers = make([]ctxFunc, 0)
 	inst.failedHandlers = make([]ctxFunc, 0)
+	inst.unsignedHandlers = make([]ctxFunc, 0)
+	inst.unauthedHandlers = make([]ctxFunc, 0)
 	inst.deniedHandlers = make([]ctxFunc, 0)
 
 	for _, handler := range inst.handlers {
-		if handler.Found != nil {
-			inst.foundHandlers = append(inst.foundHandlers, handler.Found)
+		if handler.NotFound != nil {
+			inst.notFoundHandlers = append(inst.notFoundHandlers, handler.NotFound)
 		}
 		if handler.Error != nil {
 			inst.errorHandlers = append(inst.errorHandlers, handler.Error)
 		}
 		if handler.Failed != nil {
 			inst.failedHandlers = append(inst.failedHandlers, handler.Failed)
+		}
+		if handler.Unsigned != nil {
+			inst.unsignedHandlers = append(inst.unsignedHandlers, handler.Unsigned)
+		}
+		if handler.Unauthed != nil {
+			inst.unauthedHandlers = append(inst.unauthedHandlers, handler.Unauthed)
 		}
 		if handler.Denied != nil {
 			inst.deniedHandlers = append(inst.deniedHandlers, handler.Denied)
@@ -666,6 +677,9 @@ func splitPrefix(name string) (string, string) {
 	name = strings.ToLower(name)
 	if name == "" {
 		return infra.DEFAULT, ""
+	}
+	if strings.HasPrefix(name, ".") {
+		return infra.DEFAULT, strings.TrimPrefix(name, ".")
 	}
 	if strings.Contains(name, ".") {
 		parts := strings.SplitN(name, ".", 2)

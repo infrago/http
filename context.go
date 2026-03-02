@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/infrago/infra"
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 type (
@@ -24,6 +24,7 @@ type (
 
 		reader *http.Request
 		writer http.ResponseWriter
+		output *responseWriter
 
 		Name    string
 		Config  Router
@@ -33,10 +34,13 @@ type (
 		headers map[string]string
 		cookies map[string]http.Cookie
 
-		Method string
-		Host   string
-		Path   string
-		Uri    string
+		Method     string
+		Host       string
+		Site       string
+		Domain     string
+		RootDomain string
+		Path       string
+		Uri        string
 
 		Ajax bool
 
@@ -53,6 +57,9 @@ type (
 		Type string
 		Data Map
 		Body Any
+
+		handling   string
+		failedBody bool
 	}
 
 	ctxFunc func(*Context)
@@ -79,23 +86,63 @@ func (ctx *Context) Next() {
 	}
 }
 
-func (ctx *Context) Found() {
-	ctx.inst.found(ctx)
+func (ctx *Context) abort() {
+	ctx.index = len(ctx.nexts)
 }
 
-func (ctx *Context) Error(res Res) {
-	ctx.Result(res)
-	ctx.inst.error(ctx)
+func (ctx *Context) NotFound() {
+	ctx.handling = "notfound"
+	ctx.abort()
 }
 
-func (ctx *Context) Failed(res Res) {
+func (ctx *Context) Error(args ...Res) {
+	res := infra.Fail
+	if len(args) > 0 && args[0] != nil {
+		res = args[0]
+	}
 	ctx.Result(res)
-	ctx.inst.failed(ctx)
+	ctx.handling = "error"
+	ctx.abort()
 }
 
-func (ctx *Context) Denied(res Res) {
+func (ctx *Context) Fail(args ...Res) {
+	res := infra.Fail
+	if len(args) > 0 && args[0] != nil {
+		res = args[0]
+	}
 	ctx.Result(res)
-	ctx.inst.denied(ctx)
+	ctx.handling = "failed"
+	ctx.abort()
+}
+
+func (ctx *Context) Unsign(args ...Res) {
+	res := infra.Unsigned
+	if len(args) > 0 && args[0] != nil {
+		res = args[0]
+	}
+	ctx.Result(res)
+	ctx.handling = "unsigned"
+	ctx.abort()
+}
+
+func (ctx *Context) Unauth(args ...Res) {
+	res := infra.Unauthed
+	if len(args) > 0 && args[0] != nil {
+		res = args[0]
+	}
+	ctx.Result(res)
+	ctx.handling = "unauthed"
+	ctx.abort()
+}
+
+func (ctx *Context) Deny(args ...Res) {
+	res := infra.Denied
+	if len(args) > 0 && args[0] != nil {
+		res = args[0]
+	}
+	ctx.Result(res)
+	ctx.handling = "denied"
+	ctx.abort()
 }
 
 func (ctx *Context) Charset(charsets ...string) string {
