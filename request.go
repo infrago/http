@@ -188,14 +188,14 @@ func (inst *Instance) crossing(ctx *Context) {
 func (inst *Instance) authorizing(ctx *Context) {
 	if ctx.Config.Sign {
 		if !ctx.Signed() {
-			ctx.Unsign(infra.Unsigned)
+			ctx.Unsign()
 			return
 		}
 	}
 
 	if ctx.Config.Auth {
 		if !ctx.Authed() {
-			ctx.Unauth(infra.Unauthed)
+			ctx.Unauth()
 			return
 		}
 	}
