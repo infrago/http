@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"io/fs"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -99,6 +100,7 @@ type (
 		handlers map[string]Handler
 
 		routerInfos map[string]Info
+		routerOrder []string
 
 		serveFilters    []ctxFunc
 		requestFilters  []ctxFunc
@@ -444,14 +446,20 @@ func (m *Module) applyDefaults(inst *Instance) {
 
 func (m *Module) buildInstance(inst *Instance) {
 	inst.routerInfos = make(map[string]Info, 0)
-	for key, router := range inst.routers {
+	keys := make([]string, 0, len(inst.routers))
+	for key := range inst.routers {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		router := inst.routers[key]
 		for i, uri := range router.Uris {
 			infoKey := key
 			if i > 0 {
 				infoKey = key + "." + string(rune('0'+i))
 			}
 			inst.routerInfos[infoKey] = Info{
-				Method: router.Method,
+				Method: router.method,
 				Uri:    uri,
 				Router: key,
 				Entry:  router.Key,
@@ -459,6 +467,35 @@ func (m *Module) buildInstance(inst *Instance) {
 			}
 		}
 	}
+	inst.routerOrder = make([]string, 0, len(inst.routerInfos))
+	for key := range inst.routerInfos {
+		inst.routerOrder = append(inst.routerOrder, key)
+	}
+	sort.SliceStable(inst.routerOrder, func(i, j int) bool {
+		left := inst.routerInfos[inst.routerOrder[i]]
+		right := inst.routerInfos[inst.routerOrder[j]]
+
+		if left.Uri != right.Uri {
+			return left.Uri < right.Uri
+		}
+
+		leftWeight := 1
+		rightWeight := 1
+		if left.Method != "" {
+			leftWeight = 0
+		}
+		if right.Method != "" {
+			rightWeight = 0
+		}
+		if leftWeight != rightWeight {
+			return leftWeight < rightWeight
+		}
+		if left.Method != right.Method {
+			return left.Method < right.Method
+		}
+
+		return inst.routerOrder[i] < inst.routerOrder[j]
+	})
 
 	inst.serveFilters = make([]ctxFunc, 0)
 	inst.requestFilters = make([]ctxFunc, 0)
@@ -533,7 +570,8 @@ func (m *Module) Open() {
 			panic("Failed to open http: " + err.Error())
 		}
 
-		for routeName, info := range inst.routerInfos {
+		for _, routeName := range inst.routerOrder {
+			info := inst.routerInfos[routeName]
 			if err := conn.Register(routeName, info); err != nil {
 				panic("Failed to register http route: " + err.Error())
 			}

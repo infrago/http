@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	. "github.com/infrago/base"
 	"github.com/infrago/infra"
@@ -33,6 +34,7 @@ type (
 		charset string
 		headers map[string]string
 		cookies map[string]http.Cookie
+		issue   bool
 
 		Method     string
 		Host       string
@@ -186,6 +188,46 @@ func (ctx *Context) Cookie(key string, vals ...Any) string {
 		return c.Value
 	}
 	return ""
+}
+
+// Sign issues token and marks cookie issuance.
+// expires is optional duration, begin defaults to current time.
+func (ctx *Context) Sign(auth bool, payload Map, expires ...time.Duration) string {
+	token := ctx.Meta.Sign(auth, payload, expires...)
+	if token != "" {
+		ctx.issue = ctx.inst.Config.Cookie != ""
+	}
+	return token
+}
+
+// SignAt issues token with custom begin time and marks cookie issuance.
+// expires is optional duration.
+func (ctx *Context) SignAt(auth bool, payload Map, begin time.Time, expires ...time.Duration) string {
+	token := ctx.Meta.SignAt(auth, payload, begin, expires...)
+	if token != "" {
+		ctx.issue = ctx.inst.Config.Cookie != ""
+	}
+	return token
+}
+
+// NewSign issues token with new token id and marks cookie issuance.
+// expires is optional duration, begin defaults to current time.
+func (ctx *Context) NewSign(auth bool, payload Map, expires ...time.Duration) string {
+	token := ctx.Meta.NewSign(auth, payload, expires...)
+	if token != "" {
+		ctx.issue = ctx.inst.Config.Cookie != ""
+	}
+	return token
+}
+
+// NewSignAt issues token with new token id and custom begin time.
+// expires is optional duration.
+func (ctx *Context) NewSignAt(auth bool, payload Map, begin time.Time, expires ...time.Duration) string {
+	token := ctx.Meta.NewSignAt(auth, payload, begin, expires...)
+	if token != "" {
+		ctx.issue = ctx.inst.Config.Cookie != ""
+	}
+	return token
 }
 
 func (ctx *Context) IP() string {

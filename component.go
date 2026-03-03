@@ -14,7 +14,7 @@ type (
 
 	// Router defines HTTP route.
 	Router struct {
-		Method   string
+		method   string
 		Uri      string   `json:"uri"`
 		Uris     []string `json:"uris"`
 		Key      string   `json:"-"`
@@ -149,7 +149,7 @@ func expandRouter(routerName string, config Router) map[string]Router {
 			realName := fmt.Sprintf("%s.%s", routerName, method)
 			realConfig := config
 
-			realConfig.Method = method
+			realConfig.method = method
 			realConfig.Nullable = methodConfig.Nullable
 			realConfig.Action = nil
 			realConfig.Actions = nil
