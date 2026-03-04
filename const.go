@@ -3,14 +3,6 @@ package http
 import "net/http"
 
 const (
-	GET     = "GET"
-	POST    = "POST"
-	PUT     = "PUT"
-	DELETE  = "DELETE"
-	PATCH   = "PATCH"
-	OPTIONS = "OPTIONS"
-	HEAD    = "HEAD"
-
 	UTF8    = "utf-8"
 	DEFAULT = "default"
 )
