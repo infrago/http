@@ -423,8 +423,8 @@ func (ctx *Context) Status(code int, texts ...string) {
 	}
 }
 
-// Echo outputs API response.
-func (ctx *Context) Echo(res Res, args ...Any) {
+// Answer outputs API response.
+func (ctx *Context) Answer(res Res, args ...Any) {
 	ctx.clearBody()
 
 	code := 0
@@ -466,7 +466,7 @@ func (ctx *Context) Echo(res Res, args ...Any) {
 	}
 
 	ctx.Type = "json"
-	ctx.Body = httpEchoBody{code, text, data}
+	ctx.Body = httpAnswerBody{code, text, data}
 }
 
 func (ctx *Context) uploadFile(patterns ...string) (*os.File, error) {

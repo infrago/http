@@ -31,7 +31,7 @@ type (
 		json     Any
 		callback string
 	}
-	httpEchoBody struct {
+	httpAnswerBody struct {
 		code int
 		text string
 		data Map
@@ -152,8 +152,8 @@ func (inst *Instance) body(ctx *Context) {
 		inst.bodyJson(ctx, body)
 	case httpJsonpBody:
 		inst.bodyJsonp(ctx, body)
-	case httpEchoBody:
-		inst.bodyEcho(ctx, body)
+	case httpAnswerBody:
+		inst.bodyAnswer(ctx, body)
 	case httpFileBody:
 		inst.bodyFile(ctx, body)
 	case httpBinaryBody:
@@ -274,7 +274,7 @@ func (inst *Instance) bodyJsonp(ctx *Context, body httpJsonpBody) {
 	}
 }
 
-func (inst *Instance) bodyEcho(ctx *Context, body httpEchoBody) {
+func (inst *Instance) bodyAnswer(ctx *Context, body httpAnswerBody) {
 	result := Map{
 		"code": body.code,
 		"time": time.Now().Unix(),
@@ -285,7 +285,24 @@ func (inst *Instance) bodyEcho(ctx *Context, body httpEchoBody) {
 	}
 
 	if body.data != nil {
-		result["data"] = body.data
+		var data Any = body.data
+		if ctx.Config.Data != nil && ctx.Code == StatusOK {
+			val := Map{}
+			res := infra.Mapping(Vars{
+				"data": Var{Type: "json", Required: true, Children: ctx.Config.Data},
+			}, Map{"data": body.data}, val, false, false, ctx.Timezone())
+			if res == nil || res.OK() {
+				if mapped, ok := val["data"]; ok {
+					data = mapped
+				}
+			} else {
+				result["code"] = infra.StatusCode(res.Status(), body.code)
+				result["text"] = ctx.String(res.Status(), res.Args()...)
+				inst.bodyJson(ctx, httpJsonBody{result})
+				return
+			}
+		}
+		result["data"] = data
 	}
 
 	inst.bodyJson(ctx, httpJsonBody{result})
