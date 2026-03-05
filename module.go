@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -74,6 +75,11 @@ type (
 		Defaults []string
 
 		Setting Map
+
+		requireSet  bool
+		tokenSet    bool
+		cryptoSet   bool
+		httpOnlySet bool
 	}
 
 	Configs map[string]Config
@@ -236,14 +242,8 @@ func (m *Module) configure(name string, conf Map) {
 	if v, ok := conf["driver"].(string); ok && v != "" {
 		cfg.Driver = v
 	}
-	if v, ok := conf["port"].(int); ok {
-		cfg.Port = v
-	}
-	if v, ok := conf["port"].(int64); ok {
-		cfg.Port = int(v)
-	}
-	if v, ok := conf["port"].(float64); ok {
-		cfg.Port = int(v)
+	if port, ok := parsePort(conf["port"]); ok {
+		cfg.Port = port
 	}
 	if v, ok := conf["host"].(string); ok {
 		cfg.Host = v
@@ -253,6 +253,7 @@ func (m *Module) configure(name string, conf Map) {
 	}
 	if v, ok := conf["require"].(bool); ok {
 		cfg.Require = v
+		cfg.requireSet = true
 	}
 	if v, ok := conf["cert"].(string); ok {
 		cfg.CertFile = v
@@ -274,6 +275,7 @@ func (m *Module) configure(name string, conf Map) {
 	}
 	if v, ok := conf["token"].(bool); ok {
 		cfg.Token = v
+		cfg.tokenSet = true
 	}
 	if v, ok := conf["expire"]; ok {
 		if d := parseDuration(v); d > 0 {
@@ -282,6 +284,7 @@ func (m *Module) configure(name string, conf Map) {
 	}
 	if v, ok := conf["crypto"].(bool); ok {
 		cfg.Crypto = v
+		cfg.cryptoSet = true
 	}
 	if v, ok := conf["maxage"]; ok {
 		if d := parseDuration(v); d > 0 {
@@ -290,6 +293,7 @@ func (m *Module) configure(name string, conf Map) {
 	}
 	if v, ok := conf["httponly"].(bool); ok {
 		cfg.HttpOnly = v
+		cfg.httpOnlySet = true
 	}
 	if v, ok := conf["upload"].(string); ok {
 		cfg.Upload = v
@@ -456,7 +460,7 @@ func (m *Module) buildInstance(inst *Instance) {
 		for i, uri := range router.Uris {
 			infoKey := key
 			if i > 0 {
-				infoKey = key + "." + string(rune('0'+i))
+				infoKey = key + "." + strconv.Itoa(i)
 			}
 			inst.routerInfos[infoKey] = Info{
 				Method: router.method,
@@ -652,6 +656,47 @@ func parseDuration(val Any) time.Duration {
 	return 0
 }
 
+func parsePort(val Any) (int, bool) {
+	switch v := val.(type) {
+	case int:
+		return v, true
+	case int8:
+		return int(v), true
+	case int16:
+		return int(v), true
+	case int32:
+		return int(v), true
+	case int64:
+		return int(v), true
+	case uint:
+		return int(v), true
+	case uint8:
+		return int(v), true
+	case uint16:
+		return int(v), true
+	case uint32:
+		return int(v), true
+	case uint64:
+		return int(v), true
+	case float32:
+		return int(v), true
+	case float64:
+		return int(v), true
+	case string:
+		s := strings.TrimSpace(v)
+		if s == "" {
+			return 0, false
+		}
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			return 0, false
+		}
+		return n, true
+	default:
+		return 0, false
+	}
+}
+
 func mergeConfig(baseCfg, newCfg Config) Config {
 	out := baseCfg
 	if newCfg.Driver != "" {
@@ -666,8 +711,12 @@ func mergeConfig(baseCfg, newCfg Config) Config {
 	if newCfg.Domain != "" {
 		out.Domain = newCfg.Domain
 	}
-	if newCfg.Require {
+	if newCfg.requireSet {
+		out.Require = newCfg.Require
+		out.requireSet = true
+	} else if newCfg.Require {
 		out.Require = true
+		out.requireSet = true
 	}
 	if newCfg.CertFile != "" {
 		out.CertFile = newCfg.CertFile
@@ -681,20 +730,32 @@ func mergeConfig(baseCfg, newCfg Config) Config {
 	if newCfg.Cookie != "" {
 		out.Cookie = newCfg.Cookie
 	}
-	if newCfg.Token {
+	if newCfg.tokenSet {
+		out.Token = newCfg.Token
+		out.tokenSet = true
+	} else if newCfg.Token {
 		out.Token = true
+		out.tokenSet = true
 	}
 	if newCfg.Expire != 0 {
 		out.Expire = newCfg.Expire
 	}
-	if newCfg.Crypto {
+	if newCfg.cryptoSet {
+		out.Crypto = newCfg.Crypto
+		out.cryptoSet = true
+	} else if newCfg.Crypto {
 		out.Crypto = true
+		out.cryptoSet = true
 	}
 	if newCfg.MaxAge != 0 {
 		out.MaxAge = newCfg.MaxAge
 	}
-	if newCfg.HttpOnly {
+	if newCfg.httpOnlySet {
+		out.HttpOnly = newCfg.HttpOnly
+		out.httpOnlySet = true
+	} else if newCfg.HttpOnly {
 		out.HttpOnly = true
+		out.httpOnlySet = true
 	}
 	if newCfg.Upload != "" {
 		out.Upload = newCfg.Upload
