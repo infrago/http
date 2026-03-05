@@ -256,6 +256,18 @@ func (ctx *Context) Agent() string {
 	return ctx.Header("User-Agent")
 }
 
+func (ctx *Context) RouteUri(name string, values ...Map) string {
+	return (&httpUrl{ctx: ctx}).RouteUri(name, values...)
+}
+
+func (ctx *Context) RouteUrl(name string, values ...Map) string {
+	return (&httpUrl{ctx: ctx}).RouteUrl(name, values...)
+}
+
+func (ctx *Context) SiteUrl(name, path string, options ...Map) string {
+	return (&httpUrl{ctx: ctx}).SiteUrl(name, path, options...)
+}
+
 // Response methods
 
 func (ctx *Context) clearBody() {
