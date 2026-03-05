@@ -302,6 +302,19 @@ func (inst *Instance) bodyAnswer(ctx *Context, body httpAnswerBody) {
 				return
 			}
 		}
+		if ctx.inst.Config.AnswerDataEncode {
+			codec := strings.TrimSpace(ctx.inst.Config.AnswerDataCodec)
+			if codec == "" {
+				codec = "text"
+			}
+			val := Map{}
+			_ = infra.Mapping(Vars{
+				"data": Var{Required: true, Encode: codec},
+			}, Map{"data": data}, val, false, false, ctx.Timezone())
+			if mapped, ok := val["data"]; ok {
+				data = mapped
+			}
+		}
 		result["data"] = data
 	}
 

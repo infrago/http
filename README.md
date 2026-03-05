@@ -64,6 +64,9 @@ driver = "default"
 - `crypto`
 - `maxage`
 - `httponly`
+- `answerencode`
+- `codec`
+- `answer`
 - `upload`
 - `static`
 - `defaults`

@@ -69,6 +69,10 @@ type (
 		Crypto   bool
 		MaxAge   time.Duration
 		HttpOnly bool
+		// AnswerDataEncode toggles ctx.Answer(data) payload encoding.
+		AnswerDataEncode bool
+		// AnswerDataCodec is codec name used by infra.Mapping Var.Encode.
+		AnswerDataCodec string
 
 		Upload   string
 		Static   string
@@ -76,10 +80,11 @@ type (
 
 		Setting Map
 
-		requireSet  bool
-		tokenSet    bool
-		cryptoSet   bool
-		httpOnlySet bool
+		requireSet          bool
+		tokenSet            bool
+		cryptoSet           bool
+		httpOnlySet         bool
+		answerDataEncodeSet bool
 	}
 
 	Configs map[string]Config
@@ -294,6 +299,53 @@ func (m *Module) configure(name string, conf Map) {
 	if v, ok := conf["httponly"].(bool); ok {
 		cfg.HttpOnly = v
 		cfg.httpOnlySet = true
+	}
+	if v, ok := conf["answerencode"].(bool); ok {
+		cfg.AnswerDataEncode = v
+		cfg.answerDataEncodeSet = true
+	}
+	if v, ok := conf["answer_encode"].(bool); ok {
+		cfg.AnswerDataEncode = v
+		cfg.answerDataEncodeSet = true
+	}
+	if v, ok := conf["answerdataencode"].(bool); ok {
+		cfg.AnswerDataEncode = v
+		cfg.answerDataEncodeSet = true
+	}
+	if v, ok := conf["answer_data_encode"].(bool); ok {
+		cfg.AnswerDataEncode = v
+		cfg.answerDataEncodeSet = true
+	}
+	if v, ok := conf["answercodec"].(string); ok {
+		cfg.AnswerDataCodec = strings.TrimSpace(v)
+	}
+	if v, ok := conf["answer_codec"].(string); ok {
+		cfg.AnswerDataCodec = strings.TrimSpace(v)
+	}
+	if v, ok := conf["answerdatacodec"].(string); ok {
+		cfg.AnswerDataCodec = strings.TrimSpace(v)
+	}
+	if v, ok := conf["answer_data_codec"].(string); ok {
+		cfg.AnswerDataCodec = strings.TrimSpace(v)
+	}
+	if v, ok := conf["codec"].(string); ok {
+		cfg.AnswerDataCodec = strings.TrimSpace(v)
+	}
+	if answer, ok := conf["answer"].(Map); ok && answer != nil {
+		if v, ok := answer["encode"].(bool); ok {
+			cfg.AnswerDataEncode = v
+			cfg.answerDataEncodeSet = true
+		}
+		if v, ok := answer["answerencode"].(bool); ok {
+			cfg.AnswerDataEncode = v
+			cfg.answerDataEncodeSet = true
+		}
+		if v, ok := answer["codec"].(string); ok {
+			cfg.AnswerDataCodec = strings.TrimSpace(v)
+		}
+		if v, ok := answer["answercodec"].(string); ok {
+			cfg.AnswerDataCodec = strings.TrimSpace(v)
+		}
 	}
 	if v, ok := conf["upload"].(string); ok {
 		cfg.Upload = v
@@ -756,6 +808,16 @@ func mergeConfig(baseCfg, newCfg Config) Config {
 	} else if newCfg.HttpOnly {
 		out.HttpOnly = true
 		out.httpOnlySet = true
+	}
+	if newCfg.answerDataEncodeSet {
+		out.AnswerDataEncode = newCfg.AnswerDataEncode
+		out.answerDataEncodeSet = true
+	} else if newCfg.AnswerDataEncode {
+		out.AnswerDataEncode = true
+		out.answerDataEncodeSet = true
+	}
+	if newCfg.AnswerDataCodec != "" {
+		out.AnswerDataCodec = newCfg.AnswerDataCodec
 	}
 	if newCfg.Upload != "" {
 		out.Upload = newCfg.Upload
