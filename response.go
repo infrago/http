@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
@@ -48,6 +49,9 @@ type (
 		buffer io.ReadCloser
 		size   int64
 		name   string
+	}
+	httpProxyBody struct {
+		target string
 	}
 	httpViewBody struct {
 		view  string
@@ -160,6 +164,8 @@ func (inst *Instance) body(ctx *Context) {
 		inst.bodyBinary(ctx, body)
 	case httpBufferBody:
 		inst.bodyBuffer(ctx, body)
+	case httpProxyBody:
+		inst.bodyProxy(ctx, body)
 	case httpViewBody:
 		inst.bodyView(ctx, body)
 	case httpStatusBody:
@@ -381,6 +387,29 @@ func (inst *Instance) bodyBuffer(ctx *Context, body httpBufferBody) {
 		inst.bodyFail(ctx, err)
 	}
 	body.buffer.Close()
+}
+
+func (inst *Instance) bodyProxy(ctx *Context, body httpProxyBody) {
+	target, err := url.Parse(strings.TrimSpace(body.target))
+	if err != nil || target.Scheme == "" || target.Host == "" {
+		inst.bodyFail(ctx, fmt.Errorf("invalid proxy target %q", body.target))
+		return
+	}
+
+	proxy := &httputil.ReverseProxy{
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			if prior, ok := pr.In.Header["X-Forwarded-For"]; ok {
+				pr.Out.Header["X-Forwarded-For"] = append([]string(nil), prior...)
+			}
+			pr.SetURL(target)
+			pr.SetXForwarded()
+		},
+		ErrorHandler: func(rw http.ResponseWriter, req *http.Request, err error) {
+			inst.bodyFail(ctx, err)
+		},
+	}
+
+	proxy.ServeHTTP(ctx.writer, ctx.reader)
 }
 
 func (inst *Instance) bodyView(ctx *Context, body httpViewBody) {

@@ -360,10 +360,15 @@ func (ctx *Context) Binary(bytes []byte, args ...string) {
 	ctx.Body = httpBinaryBody{bytes, name}
 }
 
-func (ctx *Context) Buffer(buffer io.ReadCloser, size int64, args ...string) {
+func (ctx *Context) Stream(buffer io.ReadCloser, size int64, args ...string) {
 	ctx.clearBody()
 	name := ctx.fileTyping(args...)
 	ctx.Body = httpBufferBody{buffer, size, name}
+}
+
+func (ctx *Context) Proxy(target string) {
+	ctx.clearBody()
+	ctx.Body = httpProxyBody{target: target}
 }
 
 // View renders template by view module.
