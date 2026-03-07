@@ -24,6 +24,7 @@ type (
 		Args     Vars     `json:"args"`
 		Data     Vars     `json:"data"`
 		Setting  Map      `json:"-"`
+		Loading  Loading  `json:"loading"`
 
 		Routing Routing   `json:"routing"`
 		Actions []ctxFunc `json:"-"`
@@ -41,6 +42,17 @@ type (
 	}
 
 	Routing map[string]Router
+	Loading map[string]Loader
+	Loader  struct {
+		Required bool   `json:"required"`
+		Invoke   string `json:"invoke"`
+		Value    string `json:"value"`
+		Args     string `json:"args"`
+		Name     string `json:"name"`
+		Desc     string `json:"desc"`
+		Empty    Res    `json:"-"`
+		Error    Res    `json:"-"`
+	}
 
 	// Routers defines batch router registration.
 	Routers map[string]Router
@@ -157,6 +169,7 @@ func expandRouter(routerName string, config Router) map[string]Router {
 			realConfig.Args = nil
 			realConfig.Data = nil
 			realConfig.Setting = nil
+			realConfig.Loading = nil
 
 			// Copy from parent
 			if config.Args != nil {
@@ -175,6 +188,12 @@ func expandRouter(routerName string, config Router) map[string]Router {
 				realConfig.Setting = Map{}
 				for k, v := range config.Setting {
 					realConfig.Setting[k] = v
+				}
+			}
+			if config.Loading != nil {
+				realConfig.Loading = Loading{}
+				for k, v := range config.Loading {
+					realConfig.Loading[k] = v
 				}
 			}
 
@@ -207,6 +226,14 @@ func expandRouter(routerName string, config Router) map[string]Router {
 				}
 				for k, v := range methodConfig.Setting {
 					realConfig.Setting[k] = v
+				}
+			}
+			if methodConfig.Loading != nil {
+				if realConfig.Loading == nil {
+					realConfig.Loading = Loading{}
+				}
+				for k, v := range methodConfig.Loading {
+					realConfig.Loading[k] = v
 				}
 			}
 

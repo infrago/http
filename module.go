@@ -19,9 +19,9 @@ func init() {
 
 var module = &Module{
 	defaultConfig: Config{Driver: DEFAULT, Charset: UTF8, Port: 8080},
-	cross:         Cross{Allow: true},
 	drivers:       make(map[string]Driver, 0),
 	configs:       make(map[string]Config, 0),
+	crosses:       make(map[string]Cross, 0),
 	instances:     make(map[string]*Instance, 0),
 	routers:       make(map[string]Router, 0),
 	filters:       make(map[string]Filter, 0),
@@ -40,10 +40,10 @@ type (
 		started bool
 
 		defaultConfig Config
-		cross         Cross
 
 		drivers   map[string]Driver
 		configs   map[string]Config
+		crosses   map[string]Cross
 		instances map[string]*Instance
 
 		routers  map[string]Router
@@ -227,7 +227,9 @@ func (m *Module) Config(global Map) {
 
 	rootConfig := Map{}
 	for key, val := range cfgMap {
-		if conf, ok := val.(Map); ok && key != "setting" {
+		if conf, ok := httpMapValue(val); ok && key == "cross" {
+			m.configureCross(infra.DEFAULT, conf)
+		} else if conf, ok := httpMapValue(val); ok && key != "setting" {
 			m.configure(key, conf)
 		} else {
 			rootConfig[key] = val
@@ -239,6 +241,10 @@ func (m *Module) Config(global Map) {
 }
 
 func (m *Module) configure(name string, conf Map) {
+	if crossConf, ok := httpMapValue(conf["cross"]); ok && crossConf != nil {
+		m.configureCross(name, crossConf)
+	}
+
 	cfg := m.defaultConfig
 	if existing, ok := m.configs[name]; ok {
 		cfg = existing
@@ -363,6 +369,17 @@ func (m *Module) configure(name string, conf Map) {
 	m.configs[name] = cfg
 }
 
+func (m *Module) configureCross(name string, conf Map) {
+	name = strings.ToLower(strings.TrimSpace(name))
+	if name == "" {
+		name = infra.DEFAULT
+	}
+	if m.crosses == nil {
+		m.crosses = make(map[string]Cross, 0)
+	}
+	m.crosses[name] = mergeCross(m.crosses[name], conf)
+}
+
 func (m *Module) ensureInstance(name string) *Instance {
 	if name == "" {
 		name = infra.DEFAULT
@@ -374,7 +391,7 @@ func (m *Module) ensureInstance(name string) *Instance {
 	inst = &Instance{
 		Name:     name,
 		Config:   m.defaultConfig,
-		Cross:    m.cross,
+		Cross:    m.crosses[name],
 		Setting:  m.defaultConfig.Setting,
 		routers:  make(map[string]Router, 0),
 		filters:  make(map[string]Filter, 0),
@@ -434,7 +451,7 @@ func (m *Module) Setup() {
 		}
 		inst.Config = cfg
 		inst.Setting = inst.Config.Setting
-		inst.Cross = m.cross
+		inst.Cross = m.crosses[name]
 		inst.routers = make(map[string]Router, 0)
 		inst.filters = make(map[string]Filter, 0)
 		inst.handlers = make(map[string]Handler, 0)
@@ -706,6 +723,75 @@ func parseDuration(val Any) time.Duration {
 		}
 	}
 	return 0
+}
+
+func httpMapValue(value Any) (Map, bool) {
+	switch v := value.(type) {
+	case Map:
+		return v, v != nil
+	default:
+		return nil, false
+	}
+}
+
+func parseStringList(val Any) []string {
+	switch v := val.(type) {
+	case nil:
+		return nil
+	case string:
+		if v == "" {
+			return nil
+		}
+		return []string{v}
+	case []string:
+		out := make([]string, 0, len(v))
+		for _, s := range v {
+			if s != "" {
+				out = append(out, s)
+			}
+		}
+		return out
+	case []Any:
+		out := make([]string, 0, len(v))
+		for _, item := range v {
+			if s, ok := item.(string); ok && s != "" {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
+}
+
+func mergeCross(base Cross, conf Map) Cross {
+	out := base
+
+	if v, ok := conf["allow"].(bool); ok {
+		out.Allow = v
+	}
+	if v, ok := conf["enable"].(bool); ok {
+		out.Allow = v
+	}
+	if v, ok := conf["method"].(string); ok {
+		out.Method = v
+	}
+	if vals := parseStringList(conf["methods"]); len(vals) > 0 {
+		out.Methods = vals
+	}
+	if v, ok := conf["origin"].(string); ok {
+		out.Origin = v
+	}
+	if vals := parseStringList(conf["origins"]); len(vals) > 0 {
+		out.Origins = vals
+	}
+	if v, ok := conf["header"].(string); ok {
+		out.Header = v
+	}
+	if vals := parseStringList(conf["headers"]); len(vals) > 0 {
+		out.Headers = vals
+	}
+
+	return out
 }
 
 func parsePort(val Any) (int, bool) {

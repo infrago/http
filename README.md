@@ -44,6 +44,20 @@ driver = "default"
 
 - `Serve(name string, params Map, res http.ResponseWriter, req *http.Request)`
 
+## 实例跨域配置
+
+跨域只支持实例级配置：
+
+- 默认实例：`[http.cross]`
+- 命名实例：`[http.xxx.cross]`
+
+常用键：
+
+- `allow` / `enable`
+- `method` / `methods`
+- `origin` / `origins`
+- `header` / `headers`
+
 ## 全局配置项（所有配置键）
 
 配置段：`[http]`

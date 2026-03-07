@@ -165,6 +165,7 @@ func (inst *Instance) open(ctx *Context) {
 func (inst *Instance) serve(ctx *Context) {
 	ctx.clear()
 
+	ctx.next(inst.crossing)
 	ctx.next(inst.finding)
 	ctx.next(inst.requestFilters...)
 	ctx.next(inst.request)
@@ -197,10 +198,10 @@ func (inst *Instance) handle(ctx *Context) {
 func (inst *Instance) request(ctx *Context) {
 	ctx.clear()
 
-	ctx.next(inst.crossing)
 	ctx.next(inst.parsing)
 	ctx.next(inst.authorizing)
 	ctx.next(inst.arguing)
+	ctx.next(inst.loading)
 	ctx.next(inst.execute)
 
 	ctx.Next()

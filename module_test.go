@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/infrago/base"
+	"github.com/infrago/infra"
 )
 
 func TestBuildInstanceUsesNumericUriSuffix(t *testing.T) {
@@ -80,5 +81,50 @@ func TestConfigureSupportsCodecAndAnswerMap(t *testing.T) {
 	cfg = m.configs["api"]
 	if cfg.AnswerDataEncode || cfg.AnswerDataCodec != "codec_b" {
 		t.Fatalf("expected answer map override, got encode=%v codec=%q", cfg.AnswerDataEncode, cfg.AnswerDataCodec)
+	}
+}
+
+func TestConfigParsesInstanceCrossOnly(t *testing.T) {
+	m := &Module{
+		defaultConfig: Config{},
+		configs:       map[string]Config{},
+		crosses:       map[string]Cross{},
+	}
+
+	m.Config(Map{
+		"cross": Map{
+			"allow": true,
+		},
+		"http": Map{
+			"port": 8080,
+			"cross": Map{
+				"enable": true,
+				"origin": "https://admin.example.com",
+			},
+			"api": Map{
+				"port": 9090,
+				"cross": Map{
+					"allow":   true,
+					"methods": []Any{"OPTIONS", "GET"},
+				},
+			},
+		},
+	})
+
+	if _, ok := m.configs["cross"]; ok {
+		t.Fatalf("expected http.cross to configure default instance, not create an instance named cross")
+	}
+
+	defaultCross := m.crosses[infra.DEFAULT]
+	if !defaultCross.Allow || defaultCross.Origin != "https://admin.example.com" {
+		t.Fatalf("unexpected default instance cross: %#v", defaultCross)
+	}
+
+	apiCross := m.crosses["api"]
+	if !apiCross.Allow {
+		t.Fatalf("expected api instance cross to enable allow")
+	}
+	if len(apiCross.Methods) != 2 || apiCross.Methods[0] != "OPTIONS" || apiCross.Methods[1] != "GET" {
+		t.Fatalf("unexpected api instance cross methods: %#v", apiCross.Methods)
 	}
 }
