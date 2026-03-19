@@ -4,9 +4,9 @@ go 1.25.3
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/infrago/base v0.14.0
-	github.com/infrago/infra v0.14.0
-	github.com/infrago/view v0.14.0
+	github.com/infrago/base v0.15.0
+	github.com/infrago/infra v0.15.0
+	github.com/infrago/view v0.15.0
 )
 
 require (
