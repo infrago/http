@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	. "github.com/infrago/base"
+	"github.com/infrago/ws"
 )
 
 type (
@@ -18,6 +19,7 @@ type (
 		Close() error
 
 		Register(name string, info Info) error
+		Upgrade(res http.ResponseWriter, req *http.Request) (ws.Conn, error)
 
 		Start() error
 		StartTLS(certFile, keyFile string) error

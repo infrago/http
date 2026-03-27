@@ -94,6 +94,10 @@ func (inst *Instance) bodyFail(ctx *Context, err error) {
 }
 
 func (inst *Instance) body(ctx *Context) {
+	if ctx.upgraded {
+		return
+	}
+
 	if ctx.Code <= 0 {
 		ctx.Code = StatusOK
 	}

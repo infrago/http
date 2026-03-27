@@ -222,6 +222,10 @@ func (inst *Instance) execute(ctx *Context) {
 }
 
 func (inst *Instance) response(ctx *Context) {
+	if ctx.upgraded {
+		return
+	}
+
 	ctx.clear()
 
 	ctx.next(inst.responseFilters...)

@@ -62,6 +62,7 @@ type (
 
 		handling   string
 		failedBody bool
+		upgraded   bool
 	}
 
 	ctxFunc func(*Context)
