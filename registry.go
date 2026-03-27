@@ -7,7 +7,3 @@ func (Router) RegistryComponent() string {
 func (Routers) RegistryComponent() string {
 	return "http"
 }
-
-func (Endpoint) RegistryComponent() string {
-	return "http"
-}

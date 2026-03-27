@@ -8,6 +8,7 @@ require (
 	github.com/infrago/base v0.19.0
 	github.com/infrago/infra v0.19.0
 	github.com/infrago/view v0.19.0
+	github.com/infrago/ws v0.19.0
 )
 
 require (
@@ -15,3 +16,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
+replace github.com/infrago/infra => ../infra
+
+replace github.com/infrago/ws => ../ws

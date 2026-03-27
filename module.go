@@ -26,7 +26,6 @@ var module = &Module{
 	routers:       make(map[string]Router, 0),
 	filters:       make(map[string]Filter, 0),
 	handlers:      make(map[string]Handler, 0),
-	endpoints:     make(map[string]Endpoint, 0),
 }
 
 func SetFS(fsys fs.FS) {
@@ -47,10 +46,9 @@ type (
 		crosses   map[string]Cross
 		instances map[string]*Instance
 
-		routers   map[string]Router
-		filters   map[string]Filter
-		handlers  map[string]Handler
-		endpoints map[string]Endpoint
+		routers  map[string]Router
+		filters  map[string]Filter
+		handlers map[string]Handler
 	}
 
 	Config struct {
@@ -146,8 +144,6 @@ func (m *Module) Register(name string, value Any) {
 		m.RegisterFilter(name, v)
 	case Handler:
 		m.RegisterHandler(name, v)
-	case Endpoint:
-		m.RegisterEndpoint(name, v)
 	}
 }
 
@@ -1001,21 +997,4 @@ func requireDefaultForName(name string, instances map[string]struct{}) bool {
 		return false
 	}
 	return true
-}
-
-func (m *Module) endpoint(name string) (Endpoint, bool) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	if len(m.endpoints) == 0 {
-		return Endpoint{}, false
-	}
-
-	if name == "" {
-		name = infra.DEFAULT
-	}
-	name = strings.TrimSpace(strings.ToLower(name))
-
-	endpoint, ok := m.endpoints[name]
-	return endpoint, ok
 }

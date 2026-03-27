@@ -79,12 +79,6 @@ type (
 		Denied   ctxFunc `json:"-"`
 	}
 
-	Endpoint struct {
-		Name   string `json:"name"`
-		Desc   string `json:"desc"`
-		Accept func(ctx *Context, socket Socket) error
-	}
-
 	// File represents uploaded file info.
 	File struct {
 		Checksum  string `json:"checksum"`
@@ -148,34 +142,6 @@ func (m *Module) RegisterHandler(name string, config Handler) {
 	} else {
 		if _, ok := m.handlers[name]; !ok {
 			m.handlers[name] = config
-		}
-	}
-}
-
-// RegisterEndpoint registers one upgrade endpoint.
-func (m *Module) RegisterEndpoint(name string, config Endpoint) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	if m.opened {
-		return
-	}
-
-	if name == "" {
-		name = infra.DEFAULT
-	}
-	name = strings.ToLower(name)
-	if config.Name == "" {
-		config.Name = name
-	}
-	if config.Accept == nil {
-		return
-	}
-	if infra.Override() {
-		m.endpoints[name] = config
-	} else {
-		if _, ok := m.endpoints[name]; !ok {
-			m.endpoints[name] = config
 		}
 	}
 }
