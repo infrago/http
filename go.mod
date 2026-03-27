@@ -5,10 +5,10 @@ go 1.25.3
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/infrago/base v0.19.0
-	github.com/infrago/infra v0.19.0
-	github.com/infrago/view v0.19.0
-	github.com/infrago/ws v0.19.0
+	github.com/infrago/base v0.20.0
+	github.com/infrago/infra v0.20.0
+	github.com/infrago/view v0.20.0
+	github.com/infrago/ws v0.20.0
 )
 
 require (
@@ -16,6 +16,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/infrago/infra => ../infra
 
-replace github.com/infrago/ws => ../ws
