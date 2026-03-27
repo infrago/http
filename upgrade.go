@@ -2,12 +2,12 @@ package http
 
 import (
 	"errors"
+	"strings"
 
-	. "github.com/infrago/base"
-	"github.com/infrago/ws"
+	"github.com/infrago/infra"
 )
 
-func (ctx *Context) Upgrade() error {
+func (ctx *Context) Upgrade(names ...string) error {
 	if ctx == nil {
 		return errors.New("invalid http context")
 	}
@@ -16,6 +16,17 @@ func (ctx *Context) Upgrade() error {
 	}
 	if ctx.inst == nil || ctx.inst.connect == nil {
 		return errors.New("invalid http connection")
+	}
+
+	endpointName := infra.DEFAULT
+	if len(names) > 0 && strings.TrimSpace(names[0]) != "" {
+		endpointName = strings.ToLower(strings.TrimSpace(names[0]))
+	}
+
+	endpoint, ok := module.endpoint(endpointName)
+	accept, loaded := infra.LoadUpgradeAcceptor(endpointName)
+	if (!ok || endpoint.Accept == nil) && !loaded {
+		return errors.New("invalid http upgrade endpoint")
 	}
 
 	conn, err := ctx.inst.connect.Upgrade(ctx.writer, ctx.reader)
@@ -28,34 +39,28 @@ func (ctx *Context) Upgrade() error {
 	ctx.clearBody()
 	ctx.Body = nil
 
-	return ws.Accept(ws.AcceptOptions{
-		Conn:       conn,
-		Meta:       ctx.Meta,
-		Name:       ctx.Name,
-		Site:       ctx.Site,
-		Host:       ctx.Host,
-		Domain:     ctx.Domain,
-		RootDomain: ctx.RootDomain,
-		Path:       ctx.Path,
-		Uri:        ctx.Uri,
-		Setting:    cloneContextMap(ctx.Setting),
-		Params:     cloneContextMap(ctx.Params),
-		Query:      cloneContextMap(ctx.Query),
-		Form:       cloneContextMap(ctx.Form),
-		Value:      cloneContextMap(ctx.Value),
-		Args:       cloneContextMap(ctx.Args),
-		Locals:     cloneContextMap(ctx.Locals),
-	})
-}
-
-func cloneContextMap(src Map) Map {
-	if len(src) == 0 {
-		return Map{}
+	if ok && endpoint.Accept != nil {
+		return endpoint.Accept(ctx, conn)
 	}
-
-	dst := make(Map, len(src))
-	for key, value := range src {
-		dst[key] = value
+	if loaded {
+		return accept(infra.UpgradeAcceptOptions{
+			Socket:     conn,
+			Meta:       ctx.Meta,
+			Name:       ctx.Name,
+			Site:       ctx.Site,
+			Host:       ctx.Host,
+			Domain:     ctx.Domain,
+			RootDomain: ctx.RootDomain,
+			Path:       ctx.Path,
+			Uri:        ctx.Uri,
+			Setting:    ctx.Setting,
+			Params:     ctx.Params,
+			Query:      ctx.Query,
+			Form:       ctx.Form,
+			Value:      ctx.Value,
+			Args:       ctx.Args,
+			Locals:     ctx.Locals,
+		})
 	}
-	return dst
+	return errors.New("invalid http upgrade endpoint")
 }

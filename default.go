@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	. "github.com/infrago/base"
-	"github.com/infrago/ws"
 )
 
 func init() {
@@ -75,10 +74,10 @@ func (c *defaultConnect) Register(name string, info Info) error {
 	return nil
 }
 
-func (c *defaultConnect) Upgrade(res http.ResponseWriter, req *http.Request) (ws.Conn, error) {
+func (c *defaultConnect) Upgrade(res http.ResponseWriter, req *http.Request) (Socket, error) {
 	upgrader := websocket.Upgrader{
 		CheckOrigin:       func(*http.Request) bool { return true },
-		EnableCompression: ws.CompressionEnabled(),
+		EnableCompression: true,
 	}
 	conn, err := upgrader.Upgrade(res, req, nil)
 	if err != nil {
