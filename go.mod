@@ -5,10 +5,10 @@ go 1.25.3
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/infrago/base v0.20.0
-	github.com/infrago/infra v0.20.0
-	github.com/infrago/view v0.20.0
-	github.com/infrago/ws v0.20.0
+	github.com/infrago/base v0.21.0
+	github.com/infrago/infra v0.21.0
+	github.com/infrago/view v0.21.0
+	github.com/infrago/ws v0.21.0
 )
 
 require (
