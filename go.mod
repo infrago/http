@@ -5,14 +5,14 @@ go 1.25.3
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/infrago/base v0.25.0
-	github.com/infrago/infra v0.25.0
-	github.com/infrago/view v0.25.0
-	github.com/infrago/ws v0.25.0
+	github.com/infrago/base v0.26.0
+	github.com/infrago/infra v0.26.0
+	github.com/infrago/view v0.26.0
+	github.com/infrago/ws v0.26.0
 )
 
 require (
-	github.com/infrago/log v0.25.0 // indirect
+	github.com/infrago/log v0.26.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
